@@ -4,17 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Filter, X } from "lucide-react";
 
-const CATEGORIES = [
-  "All",
-  "Pure Veg",
-  "Non-Veg",
-  "Diet Spec",
-  "North Indian",
-  "South Indian",
-  "Chinese",
-  "Bengali",
-  "Homemade"
-];
+import { CATEGORIES } from "@/lib/constants";
 
 interface VendorFiltersProps {
   selectedCategory: string;
