@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     // Orders & Stats Listener
     const unsubOrders = onSnapshot(collection(db, "orders"), (snapshot) => {
       let revenue = 0;
-      const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
       orders.forEach((order: any) => {
         revenue += Number(order.total) || 0;
       });
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
         totalRevenue: revenue 
       }));
       
-      const sorted = [...orders].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 5);
+      const sorted = [...orders].sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 5);
       setRecentOrders(sorted);
     });
 
