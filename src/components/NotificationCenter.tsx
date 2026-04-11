@@ -62,13 +62,13 @@ export default function NotificationCenter() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-[100]"
+              className="fixed inset-0 z-100"
             />
             <motion.div 
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute right-0 mt-4 w-80 bg-secondary border border-white/5 rounded-[32px] shadow-2xl z-[101] overflow-hidden"
+              className="absolute right-0 mt-4 w-80 bg-secondary border border-white/5 rounded-[32px] shadow-2xl z-101 overflow-hidden"
             >
               <div className="p-6 border-b border-white/5 flex items-center justify-between">
                 <h3 className="font-bold">Notifications</h3>

@@ -241,7 +241,7 @@ export default function AdminDashboard() {
             <h2 className="text-2xl font-bold">Kitchen Partners</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {vendorsList.map((vendor) => (
-                <div key={vendor.id} className="bg-secondary/20 border border-white/5 p-6 rounded-[2rem] space-y-4">
+                <div key={vendor.id} className="bg-secondary/20 border border-white/5 p-6 rounded-4xl space-y-4">
                   <h3 className="text-lg font-bold truncate">{vendor.name}</h3>
                   <div className="flex justify-between text-xs text-muted">
                     <span>Plate: ₹{vendor.pricePerLunch}</span>

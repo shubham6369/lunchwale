@@ -81,7 +81,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
           className="object-cover brightness-50"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/20 to-transparent" />
         
         <nav className="absolute top-0 w-full z-10 px-6 h-20 flex items-center justify-between">
           <Link href="/vendors" className="p-3 bg-black/40 backdrop-blur-md border border-white/10 rounded-full hover:bg-black/60 transition-all">

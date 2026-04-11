@@ -7,7 +7,7 @@ export default function NotFound() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6 bg-[radial-gradient(circle_at_50%_0%,rgba(242,183,5,0.05)_0%,transparent_50%)]">
       <div className="text-center space-y-8 max-w-xl mx-auto">
         <div className="relative inline-block">
-          <h1 className="text-[120px] font-black leading-none bg-gradient-to-b from-white to-white/10 bg-clip-text text-transparent opacity-20">
+          <h1 className="text-[120px] font-black leading-none bg-linear-to-b from-white to-white/10 bg-clip-text text-transparent opacity-20">
             404
           </h1>
           <div className="absolute inset-0 flex items-center justify-center">

@@ -27,7 +27,7 @@ export default function WhatsAppButton({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={handleWhatsAppClick}
-      className="fixed bottom-8 right-8 z-[90] w-16 h-16 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-premium group"
+      className="fixed bottom-8 right-8 z-90 w-16 h-16 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-premium group"
     >
       <MessageCircle className="w-8 h-8 fill-white shadow-lg" />
       
