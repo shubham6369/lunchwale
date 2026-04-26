@@ -10,7 +10,8 @@ import {
   User,
   LogOut,
   Settings,
-  History
+  History,
+  ChefHat
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
@@ -22,7 +23,7 @@ import LoginDialog from "./LoginDialog";
 export default function Navbar() {
   const pathname = usePathname();
   const { cartCount } = useCart();
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -105,6 +106,21 @@ export default function Navbar() {
                          <Link href="/profile" className="flex items-center gap-3 w-full p-3 hover:bg-white/5 rounded-2xl text-[10px] font-bold transition-all">
                           <User className="w-4 h-4 text-muted" /> Shared Profile
                         </Link>
+
+                        {profile?.role === 'vendor' ? (
+                          <Link href="/vendor" className="flex items-center gap-3 w-full p-3 hover:bg-primary/10 rounded-2xl text-[10px] font-bold text-primary transition-all">
+                            <Utensils className="w-4 h-4" /> Vendor Dashboard
+                          </Link>
+                        ) : profile?.role === 'admin' ? (
+                          <Link href="/admin" className="flex items-center gap-3 w-full p-3 hover:bg-red-400/10 rounded-2xl text-[10px] font-bold text-red-400 transition-all">
+                            <Settings className="w-4 h-4" /> Admin Panel
+                          </Link>
+                        ) : (
+                          <Link href="/vendor/onboarding" className="flex items-center gap-3 w-full p-3 hover:bg-orange-400/10 rounded-2xl text-[10px] font-bold text-orange-400 transition-all">
+                            <ChefHat className="w-4 h-4" /> Become a Partner
+                          </Link>
+                        )}
+
                         <div className="h-px bg-white/5 my-1" />
                         <button 
                           onClick={() => logout()}

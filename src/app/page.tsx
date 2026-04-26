@@ -40,7 +40,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchVendors = async () => {
-      const data = await getVendors();
+      const data = await getVendors("active");
       setVendors(data);
       setFilteredVendors(data);
       setLoading(false);
@@ -228,11 +228,11 @@ export default function HomePage() {
                   id={vendor.id}
                   name={vendor.name}
                   image={vendor.image || "/images/hero.png"}
-                  rating={vendor.totalReviewCount > 0 ? (vendor.totalRatingSum / vendor.totalReviewCount).toFixed(1) : "New"}
-                  location={vendor.location}
-                  pricePerLunch={vendor.pricePerLunch}
-                  monthlyPlan={vendor.monthlyPlan}
-                  tags={vendor.tags || []}
+                  rating={vendor.totalReviewCount > 0 ? Number((vendor.totalRatingSum / vendor.totalReviewCount).toFixed(1)) : 0}
+                  location={vendor.address || vendor.location || "Local Kitchen"}
+                  pricePerLunch={vendor.pricePerLunch || 99}
+                  monthlyPlan={vendor.monthlyPlan || 2499}
+                  tags={vendor.tags || vendor.cuisines || []}
                   isPopular={vendor.isPopular}
                   deliveryTime={vendor.deliveryTime}
                 />

@@ -13,10 +13,48 @@ import {
   ChefHat
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { getVendor } from "@/lib/firestore";
+import { useRouter } from "next/navigation";
 
 export default function VendorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, profile, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
+  const [vendorDetails, setVendorDetails] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchVendor() {
+      if (authLoading) return;
+      if (!user) {
+        router.push("/");
+        return;
+      }
+      
+      // If role isn't vendor, redirect to onboarding or home
+      if (profile?.role !== "vendor" && !pathname.includes("/onboarding")) {
+        router.push("/vendor/onboarding");
+        return;
+      }
+
+      const details = await getVendor(user.uid);
+      if (!details && !pathname.includes("/onboarding")) {
+        router.push("/vendor/onboarding");
+      } else {
+        setVendorDetails(details);
+      }
+      setLoading(false);
+    }
+    fetchVendor();
+  }, [user, profile, authLoading, router, pathname]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <ChefHat className="text-orange-500 w-12 h-12 animate-bounce" />
+      </div>
+    );
+  }
 
   const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/vendor" },
@@ -83,11 +121,19 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
           </h2>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-xs font-bold text-white">Maa Ka Swaad Kitchen</div>
-              <div className="text-[10px] text-primary font-bold">Online & Taking Orders</div>
+              <div className="text-xs font-bold text-white uppercase tracking-wider">
+                {vendorDetails?.name || "Kitchen Profile"}
+              </div>
+              <div className="text-[10px] text-primary font-bold">
+                {vendorDetails?.status === "pending" ? "Pending Approval" : "Online & Taking Orders"}
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold">
-              MK
+            <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold overflow-hidden">
+              {vendorDetails?.image ? (
+                <img src={vendorDetails.image} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                vendorDetails?.name?.charAt(0) || "V"
+              )}
             </div>
           </div>
         </header>

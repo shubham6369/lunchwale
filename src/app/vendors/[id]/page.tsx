@@ -16,32 +16,45 @@ import {
   Plus,
   Minus,
   MessageCircle,
-  Utensils
+  Utensils,
+  XCircle,
+  ArrowRight
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import CartDrawer from "@/components/CartDrawer";
 import LoginDialog from "@/components/LoginDialog";
+import { cn } from "@/lib/utils";
 
 import { getVendor } from "@/lib/firestore";
 
 export default function VendorDetailPage({ params }: { params: { id: string } }) {
   const [vendor, setVendor] = useState<any>(null);
+  const [dishes, setDishes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { addToCart, items, cartCount, cartTotal, updateQuantity } = useCart();
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   React.useEffect(() => {
-    const fetchVendor = async () => {
+    const fetchVendorData = async () => {
       setLoading(true);
-      const data = await getVendor(params.id);
-      setVendor(data);
+      const res = await params;
+      const id = res.id;
+      const { getVendorDishes } = await import("@/lib/firestore");
+      const [vendorData, dishesData] = await Promise.all([
+        getVendor(id),
+        getVendorDishes(id)
+      ]);
+      setVendor(vendorData);
+      setDishes(dishesData);
       setLoading(false);
     };
-    fetchVendor();
-  }, [params.id]);
+    fetchVendorData();
+  }, [params]);
 
   if (loading) {
     return (
@@ -136,6 +149,11 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                   <Star className="w-3 h-3 fill-current" />
                   <span className="text-xs font-bold">{vendor.rating || 4.5} ({vendor.totalReviewCount || 10}+)</span>
                 </div>
+                {!vendor.isOpen && (
+                  <div className="flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-glow-red animate-pulse">
+                    <Clock className="w-3 h-3" /> Kitchen Closed
+                  </div>
+                )}
               </div>
               <h1 className="text-5xl font-bold tracking-tight">{vendor.name}</h1>
               <div className="flex flex-wrap items-center gap-6 text-sm text-muted">
@@ -149,70 +167,85 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-6 mt-12 grid lg:grid-cols-[1fr_380px] gap-12">
-        <div className="space-y-12">
-          {/* About */}
-          <section className="bg-secondary/30 p-8 rounded-[40px] border border-white/5">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center shrink-0">
-                <Info className="text-primary w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold mb-2">About Kitchen</h2>
-                <p className="text-muted leading-relaxed text-sm">{vendor.description}</p>
-              </div>
+      <main className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {dishes.length === 0 ? (
+            <div className="text-center py-20 bg-dark-card border border-dark-border rounded-2xl">
+              <ChefHat className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-400">No dishes available yet.</p>
             </div>
-          </section>
-
-          {/* Menu Sections */}
-          {menuSections.map((section: any, idx: number) => (
-            <section key={section.category || idx} className="space-y-8">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold tracking-tight flex items-center gap-3">
-                  <Utensils className="w-6 h-6 text-primary" />
-                  {section.category}
-                </h3>
-                <div className="h-px flex-1 bg-white/5 ml-6" />
-              </div>
-
-              <div className="grid gap-6">
-                {(section.items || []).map((item: any) => (
-                  <motion.div 
-                    key={item.id}
-                    whileHover={{ scale: 1.01 }}
-                    className="group bg-secondary/10 hover:bg-secondary/20 border border-white/5 p-6 rounded-[32px] flex items-center gap-6 transition-all"
+          ) : (
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Featured Dishes</h2>
+              <div className="grid gap-4">
+                {dishes.map((dish, index) => (
+                  <motion.div
+                    key={dish.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={cn(
+                      "bg-dark-card p-4 rounded-xl border border-dark-border flex gap-4 group transition-all",
+                      !vendor.isOpen && "opacity-60 grayscale-[0.5]"
+                    )}
                   >
-                    <div className="relative w-32 h-32 rounded-2xl overflow-hidden shadow-premium">
-                      <Image src={item.image} alt={item.name} fill className="object-cover" />
-                    </div>
                     <div className="flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-lg font-bold group-hover:text-primary transition-colors">{item.name}</h4>
-                        <span className="text-xl font-black text-white tracking-tight">₹{item.price}</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        {dish.veg ? (
+                          <span className="w-4 h-4 border-2 border-green-600 flex items-center justify-center">
+                            <span className="w-1.5 h-1.5 bg-green-600 rounded-full" />
+                          </span>
+                        ) : (
+                          <span className="w-4 h-4 border-2 border-red-600 flex items-center justify-center">
+                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full" />
+                          </span>
+                        )}
+                        {dish.bestSeller && (
+                          <span className="text-[10px] bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-current" /> Bestseller
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted mb-6 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5">
-                        {item.desc}
-                      </p>
+                      <h3 className="font-semibold text-lg">{dish.name}</h3>
+                      <p className="text-orange-500 font-bold mb-2">₹{dish.price}</p>
+                      <p className="text-gray-400 text-sm line-clamp-2">{dish.description}</p>
+                    </div>
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden shrink-0">
+                      {dish.image && (
+                        <img 
+                          src={dish.image} 
+                          alt={dish.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <button 
+                        disabled={!vendor.isOpen}
                         onClick={() => addToCart({
-                          id: item.id,
-                          name: item.name,
-                          price: item.price,
-                          image: item.image,
-                          vendorId: vendor.id,
-                          vendorName: vendor.name,
-                          type: section.category?.toLowerCase().includes("subscription") ? "subscription" : "meal"
+                          id: dish.id,
+                          vendorId: params.id,
+                          vendorName: vendor?.name || 'Vendor',
+                          name: dish.name,
+                          price: dish.price,
+                          image: dish.image,
+                          quantity: 1
                         })}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-background border border-white/10 group-hover:bg-primary group-hover:border-primary group-hover:text-white rounded-xl text-xs font-bold transition-all shadow-glow"
+                        className={cn(
+                          "absolute bottom-2 left-1/2 -translate-x-1/2 w-24 py-1 rounded shadow-lg transition-all font-bold flex items-center justify-center gap-2",
+                          vendor.isOpen 
+                            ? "bg-dark-surface border border-dark-border text-orange-500 hover:bg-orange-500 hover:text-white hover:border-orange-500" 
+                            : "bg-white/5 border-white/5 text-muted cursor-not-allowed"
+                        )}
                       >
-                        <Plus className="w-3 h-3" /> Add to Plate
+                        {vendor.isOpen ? <Plus className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                        {vendor.isOpen ? "ADD" : "OFFLINE"}
                       </button>
                     </div>
                   </motion.div>
                 ))}
               </div>
-            </section>
-          ))}
+            </div>
+          )}
         </div>
 
         {/* Sidebar Sticky Cart / Summary */}
@@ -246,8 +279,12 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                     <span className="text-xs font-bold text-muted uppercase">Subtotal</span>
                     <span className="text-xl font-bold">₹{cartTotal}</span>
                   </div>
-                  <button className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-glow hover:bg-primary-dark transition-all active:scale-95">
+                  <button 
+                    onClick={() => router.push('/checkout')}
+                    className="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 mt-4"
+                  >
                     Proceed to Checkout
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               )}

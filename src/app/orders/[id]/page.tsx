@@ -17,22 +17,31 @@ import {
 import Link from "next/link";
 import { getOrder } from "@/lib/firestore";
 import { useAuth } from "@/context/AuthContext";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import ReviewModal from "@/components/ReviewModal";
 
-export default function OrderTrackingPage({ params }: { params: { id: string } }) {
+export default function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const { user } = useAuth();
+  const resolvedParams = React.use(params);
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      const data = await getOrder(params.id);
-      setOrder(data);
+    // Real-time listener for the specific order
+    const orderRef = doc(db, "orders", resolvedParams.id);
+    const unsubscribe = onSnapshot(orderRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setOrder({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        setOrder(null);
+      }
       setLoading(false);
-    };
-    fetchOrder();
-  }, [params.id]);
+    });
+
+    return () => unsubscribe();
+  }, [resolvedParams.id]);
 
   if (loading) {
     return (
@@ -53,7 +62,7 @@ export default function OrderTrackingPage({ params }: { params: { id: string } }
 
   const steps = [
     { status: "pending", label: "Confirmed", icon: CheckCircle2, description: "Your order is confirmed" },
-    { status: "cooking", label: "Cooking", icon: ChefHat, description: "Chef is preparing your meal" },
+    { status: "preparing", label: "Cooking", icon: ChefHat, description: "Chef is preparing your meal" },
     { status: "out_for_delivery", label: "Delivery", icon: Truck, description: "Delivery partner is on the way" },
     { status: "delivered", label: "Delivered", icon: Package, description: "Enjoy your fresh meal!" },
   ];

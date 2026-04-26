@@ -24,6 +24,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   logout: () => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,12 +63,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  const updateProfile = async (data: Partial<UserProfile>) => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(userRef, data, { merge: true });
+    setProfile(prev => prev ? { ...prev, ...data } : null);
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

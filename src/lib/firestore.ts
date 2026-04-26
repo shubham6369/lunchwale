@@ -12,7 +12,8 @@ import {
   Timestamp,
   serverTimestamp,
   increment,
-  runTransaction
+  runTransaction,
+  deleteDoc
 } from "firebase/firestore";
 import { app } from "./firebase";
 
@@ -22,8 +23,9 @@ export const db = getFirestore(app);
 export const createUserProfile = async (uid: string, data: any) => {
   const userRef = doc(db, "users", uid);
   await setDoc(userRef, {
-    ...data,
+    uid,
     role: "customer",
+    ...data,
     createdAt: serverTimestamp(),
   }, { merge: true });
 };
@@ -51,6 +53,11 @@ export const createOrder = async (orderData: any) => {
     createdAt: serverTimestamp(),
   });
   return docRef.id;
+};
+
+export const updateOrderStatus = async (orderId: string, status: string) => {
+  const orderRef = doc(db, "orders", orderId);
+  await setDoc(orderRef, { status, updatedAt: serverTimestamp() }, { merge: true });
 };
 
 export const getUserOrders = async (uid: string) => {
@@ -116,10 +123,15 @@ export const getVendorReviews = async (vendorId: string) => {
 };
 
 // Vendor Operations
-export const getVendors = async () => {
+export const getVendors = async (status?: "active" | "pending" | "rejected") => {
   try {
     const vendorsRef = collection(db, "vendors");
-    const q = query(vendorsRef, orderBy("createdAt", "desc"));
+    let q;
+    if (status) {
+      q = query(vendorsRef, where("status", "==", status), orderBy("createdAt", "desc"));
+    } else {
+      q = query(vendorsRef, orderBy("createdAt", "desc"));
+    }
     const snap = await getDocs(q);
     
     if (snap.empty) {
@@ -137,6 +149,43 @@ export const getVendor = async (id: string) => {
   const vendorRef = doc(db, "vendors", id);
   const snap = await getDoc(vendorRef);
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+export const updateVendorStatus = async (vendorId: string, status: "active" | "rejected" | "pending") => {
+  const vendorRef = doc(db, "vendors", vendorId);
+  await setDoc(vendorRef, { status, updatedAt: serverTimestamp() }, { merge: true });
+};
+
+export const updateVendorAvailability = async (vendorId: string, isOpen: boolean) => {
+  const vendorRef = doc(db, "vendors", vendorId);
+  await setDoc(vendorRef, { isOpen, updatedAt: serverTimestamp() }, { merge: true });
+};
+
+// Dish Operations (Sub-collection)
+export const upsertDish = async (vendorId: string, dishData: any) => {
+  const dishId = dishData.id || doc(collection(db, "dummy")).id; // Use existing ID or generate one
+  const dishRef = doc(db, "vendors", vendorId, "dishes", dishId);
+  
+  await setDoc(dishRef, {
+    ...dishData,
+    id: dishId,
+    vendorId,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+  
+  return dishId;
+};
+
+export const deleteDish = async (vendorId: string, dishId: string) => {
+  const dishRef = doc(db, "vendors", vendorId, "dishes", dishId);
+  await deleteDoc(dishRef);
+};
+
+export const getVendorDishes = async (vendorId: string) => {
+  const dishesRef = collection(db, "vendors", vendorId, "dishes");
+  const q = query(dishesRef, orderBy("category", "asc"));
+  const snap = await getDocs(q);
+  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
 // Admin & Payout Operations
@@ -162,3 +211,15 @@ export const settleVendorPayout = async (vendorId: string, amount: number) => {
     });
   });
 };
+
+export const deleteReview = async (reviewId: string) => {
+  const reviewRef = doc(db, "reviews", reviewId);
+  await deleteDoc(reviewRef);
+};
+
+export const getUsers = async () => {
+  const usersRef = collection(db, "users");
+  const snap = await getDocs(usersRef);
+  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+

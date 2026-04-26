@@ -8,19 +8,28 @@ import {
   DollarSign, 
   TrendingUp, 
   Search,
-  MoreVertical,
   Activity,
-  MessageSquare,
-  ShieldAlert,
   Trash2,
-  Star
+  Star,
+  ShieldCheck,
+  ExternalLink,
+  ChevronRight,
+  Filter,
+  CheckCircle2,
+  Clock
 } from "lucide-react";
-import { motion } from "framer-motion";
-import { collection, onSnapshot } from "firebase/firestore";
+import { motion, AnimatePresence } from "framer-motion";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import AdminSidebar from "@/components/AdminSidebar";
 
 export default function AdminDashboard() {
+  const { user, profile, loading: authLoading } = useAuth();
+  const router = useRouter();
+  
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeVendors: 0,
@@ -29,13 +38,26 @@ export default function AdminDashboard() {
   });
 
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [allOrders, setAllOrders] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [vendorsList, setVendorsList] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
 
+  // Role-based protection: Wait for AUTH to load first
   useEffect(() => {
-    // Orders & Stats Listener
+    if (!authLoading) {
+      if (!user || profile?.role !== 'admin') {
+        router.replace("/");
+      }
+    }
+  }, [user, profile, authLoading, router]);
+
+  useEffect(() => {
+    if (authLoading || !user || profile?.role !== 'admin') return;
+
+    // Stats & Orders Listener (Real-time)
     const unsubOrders = onSnapshot(collection(db, "orders"), (snapshot) => {
       let revenue = 0;
       const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
@@ -49,12 +71,23 @@ export default function AdminDashboard() {
         totalRevenue: revenue 
       }));
       
-      const sorted = [...orders].sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 5);
-      setRecentOrders(sorted);
+      // Sort for recent view
+      const sorted = [...orders].sort((a: any, b: any) => {
+        const dateA = a.createdAt?.seconds || 0;
+        const dateB = b.createdAt?.seconds || 0;
+        return dateB - dateA;
+      });
+      
+      setRecentOrders(sorted.slice(0, 5));
+      setAllOrders(sorted);
+    }, (error) => {
+      console.error("Orders listener error:", error);
     });
 
     // Users Listener
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsersList(list);
       setStats(prev => ({ ...prev, totalUsers: snapshot.size }));
     });
 
@@ -77,7 +110,7 @@ export default function AdminDashboard() {
       unsubVendors();
       unsubReviews();
     };
-  }, []);
+  }, [authLoading, user, profile]);
 
   const handleSettleDues = async (vendorId: string, amount: number) => {
     try {
@@ -90,6 +123,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleApproveVendor = async (vendorId: string) => {
+    try {
+      const { updateVendorStatus } = await import("@/lib/firestore");
+      await updateVendorStatus(vendorId, "active");
+      alert("Vendor approved successfully!");
+    } catch (error) {
+      console.error("Failed to approve vendor:", error);
+      alert("Failed to approve vendor.");
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user || profile?.role !== 'admin') return null;
+
   const cards = [
     { title: "Total Revenue", value: `₹${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, trend: "+12.5%", color: "text-emerald-500", bg: "bg-emerald-500/10" },
     { title: "Total Orders", value: stats.totalOrders.toString(), icon: ShoppingBag, trend: "+8.2%", color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -98,88 +152,213 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-12 px-6 text-white">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Tabs */}
-        <div className="flex gap-8 border-b border-white/5 pb-1">
-          {["overview", "reviews", "vendors", "payouts"].map(tab => (
-            <button 
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "pb-4 text-xs font-black uppercase tracking-widest transition-all relative",
-                activeTab === tab ? "text-primary px-2" : "text-muted hover:text-white"
-              )}
-            >
-              {tab}
-              {activeTab === tab && (
-                <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-              )}
-            </button>
-          ))}
-        </div>
+    <div className="min-h-screen bg-background pt-24 pb-12 px-6">
+      <div className="max-w-[1600px] mx-auto flex gap-8">
+        
+        {/* Persistent Sidebar */}
+        <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {activeTab === "overview" && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {cards.map((card, idx) => (
-                <motion.div
-                  key={card.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="bg-secondary/40 backdrop-blur-md border border-white/5 p-6 rounded-3xl relative overflow-hidden group hover:border-primary/20 transition-all"
-                >
-                  <div className={`absolute top-0 right-0 w-24 h-24 ${card.bg} rounded-bl-full opacity-50 group-hover:scale-110 transition-transform`} />
-                  <card.icon className={`w-8 h-8 ${card.color} mb-4`} />
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted font-bold uppercase tracking-wider">{card.title}</p>
-                    <div className="flex items-end gap-2">
-                      <h3 className="text-2xl font-bold tracking-tight">{card.value}</h3>
-                      <span className="text-[10px] text-emerald-500 font-bold mb-1 flex items-center">
-                        <TrendingUp className="w-3 h-3 mr-0.5" /> {card.trend}
-                      </span>
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0 space-y-8">
+          
+          <AnimatePresence mode="wait">
+            {activeTab === "overview" && (
+              <motion.div 
+                key="overview"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h1 className="text-4xl font-bold tracking-tight text-white mb-2">Dashboard Overview</h1>
+                    <p className="text-muted text-sm font-bold uppercase tracking-widest">Real-time system performance metrics</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="px-4 py-2 bg-secondary/40 border border-white/5 rounded-2xl flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Live Data</span>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-4">
-                <div className="flex items-center justify-between px-2">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-primary" />
-                    Live Revenue Stream
-                  </h2>
                 </div>
-                <div className="bg-secondary/20 border border-white/5 rounded-3xl overflow-hidden">
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {cards.map((card, idx) => (
+                    <motion.div
+                      key={card.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="bg-secondary/40 backdrop-blur-md border border-white/5 p-6 rounded-[32px] relative overflow-hidden group hover:border-primary/20 transition-all shadow-xl"
+                    >
+                      <div className={`absolute top-0 right-0 w-24 h-24 ${card.bg} rounded-bl-full opacity-50 group-hover:scale-110 transition-transform`} />
+                      <card.icon className={`w-8 h-8 ${card.color} mb-4`} />
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-muted font-black uppercase tracking-[0.2em]">{card.title}</p>
+                        <div className="flex items-end gap-2">
+                          <h3 className="text-3xl font-bold tracking-tight text-white">{card.value}</h3>
+                          <span className="text-[10px] text-emerald-500 font-bold mb-1 flex items-center bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                            <TrendingUp className="w-3 h-3 mr-1" /> {card.trend}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                  {/* Live Revenue Stream */}
+                  <div className="xl:col-span-2 space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                      <h2 className="text-xl font-bold flex items-center gap-3 text-white">
+                        <Activity className="w-5 h-5 text-primary" />
+                        Live Revenue Stream
+                      </h2>
+                      <button 
+                        onClick={() => setActiveTab("orders")}
+                        className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                      >
+                        View All Orders
+                      </button>
+                    </div>
+                    <div className="bg-secondary/20 border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-muted">
+                            <th className="px-8 py-6">Order ID</th>
+                            <th className="px-8 py-6">Status</th>
+                            <th className="px-8 py-6">Amount</th>
+                            <th className="px-8 py-6 text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {recentOrders.map((order) => (
+                            <tr key={order.id} className="group hover:bg-white/5 transition-colors">
+                              <td className="px-8 py-6">
+                                <p className="text-xs font-bold font-mono text-white/90">#{order.id.slice(-8).toUpperCase()}</p>
+                              </td>
+                              <td className="px-8 py-6">
+                                <span className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter", 
+                                  order.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                )}>
+                                  {order.status || 'Pending'}
+                                </span>
+                              </td>
+                              <td className="px-8 py-6">
+                                <span className="text-sm font-black text-white">₹{order.total}</span>
+                              </td>
+                              <td className="px-8 py-6 text-right">
+                                <button 
+                                  onClick={() => router.push(`/orders/${order.id}`)}
+                                  className="p-3 bg-white/5 hover:bg-primary hover:text-black rounded-2xl transition-all group/view"
+                                >
+                                  <ExternalLink className="w-4 h-4 transition-transform" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* System Status & Health */}
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold px-2 text-white">System Health</h2>
+                    <div className="bg-secondary/20 border border-white/5 rounded-[40px] p-8 space-y-8 shadow-2xl">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse" />
+                          <span className="text-xs font-black uppercase tracking-widest text-emerald-500">All Systems Normal</span>
+                        </div>
+                        <span className="text-[10px] text-muted font-bold">v1.0.4-S</span>
+                      </div>
+                      
+                      <div className="space-y-6">
+                        {[
+                          { label: "Cloud Firestore", status: "Connected", latency: "12ms" },
+                          { label: "Auth Service", status: "Active", latency: "45ms" },
+                          { label: "Asset Storage", status: "Active", latency: "110ms" },
+                        ].map((s) => (
+                          <div key={s.label} className="space-y-2">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                              <span className="text-muted">{s.label}</span>
+                              <span className="text-white">{s.status}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-primary/40 w-[95%] rounded-full" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "users" && (
+              <motion.div 
+                key="users"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-white">User Management</h2>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                    <input 
+                      type="text" 
+                      placeholder="Search users..." 
+                      className="pl-12 pr-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl outline-none focus:border-primary/50 transition-all text-xs w-64 text-white"
+                    />
+                  </div>
+                </div>
+                <div className="bg-secondary/20 border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted">
-                        <th className="px-6 py-4">Order ID</th>
-                        <th className="px-6 py-4">Status</th>
-                        <th className="px-6 py-4">Amount</th>
-                        <th className="px-6 py-4 text-right">Action</th>
+                      <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-muted">
+                        <th className="px-8 py-6">User Details</th>
+                        <th className="px-8 py-6">Role</th>
+                        <th className="px-8 py-6">Joined Date</th>
+                        <th className="px-8 py-6 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {recentOrders.map((order) => (
-                        <tr key={order.id} className="group hover:bg-white/5 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="text-xs font-bold font-mono">#{order.id.slice(-8).toUpperCase()}</p>
+                      {usersList.map((u) => (
+                        <tr key={u.id} className="group hover:bg-white/5 transition-colors">
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-black text-xs">
+                                {u.displayName?.[0] || u.phoneNumber?.slice(-2) || "U"}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-white">{u.displayName || "Unset Name"}</p>
+                                <p className="text-[10px] text-muted font-bold uppercase tracking-tighter">{u.phoneNumber}</p>
+                              </div>
+                            </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold capitalize", 
-                              order.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+                          <td className="px-8 py-6">
+                            <span className={cn(
+                              "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
+                              u.role === 'admin' ? "bg-red-500/10 text-red-500 border border-red-500/20" : 
+                              u.role === 'vendor' ? "bg-orange-500/10 text-orange-500 border border-orange-500/20" : 
+                              "bg-blue-500/10 text-blue-500 border border-blue-500/20"
                             )}>
-                              {order.status || 'Pending'}
+                              {u.role}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-bold text-sm">₹{order.total}</td>
-                          <td className="px-6 py-4 text-right">
-                            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                              <MoreVertical className="w-4 h-4 text-muted" />
+                          <td className="px-8 py-6 text-xs text-muted font-bold">
+                            {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : "Historical"}
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <button className="p-2 hover:bg-white/10 rounded-xl transition-all">
+                              <ChevronRight className="w-4 h-4 text-muted" />
                             </button>
                           </td>
                         </tr>
@@ -187,106 +366,257 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold px-2">System Status</h2>
-                <div className="bg-primary/5 border border-primary/20 rounded-[32px] p-8 space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Operational</span>
+              </motion.div>
+            )}
+
+            {activeTab === "orders" && (
+              <motion.div 
+                key="orders"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-white">Full Order History</h2>
+                  <div className="flex items-center gap-4">
+                    <button className="p-3 bg-secondary/40 border border-white/5 rounded-2xl text-muted hover:text-white transition-all">
+                      <Filter className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+                <div className="bg-secondary/20 border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-muted">
+                        <th className="px-8 py-6">Order Info</th>
+                        <th className="px-8 py-6">Customer</th>
+                        <th className="px-8 py-6">Kitchen</th>
+                        <th className="px-8 py-6">Amount</th>
+                        <th className="px-8 py-6">Status</th>
+                        <th className="px-8 py-6 text-right">View</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {allOrders.map((o) => (
+                        <tr key={o.id} className="group hover:bg-white/5 transition-colors">
+                          <td className="px-8 py-6">
+                            <p className="text-[10px] font-black font-mono text-white/60 mb-1">#{o.id.slice(-8).toUpperCase()}</p>
+                            <p className="text-[9px] text-muted font-bold uppercase tracking-tighter flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--"}
+                            </p>
+                          </td>
+                          <td className="px-8 py-6 text-xs font-bold text-white">{o.userName}</td>
+                          <td className="px-8 py-6 text-xs font-bold text-muted">{o.vendorName}</td>
+                          <td className="px-8 py-6 font-black text-white text-sm">₹{o.total}</td>
+                          <td className="px-8 py-6">
+                            <span className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest", 
+                              o.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+                            )}>
+                              {o.status}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <button onClick={() => router.push(`/orders/${o.id}`)} className="p-2 hover:bg-white/10 rounded-xl">
+                              <ExternalLink className="w-4 h-4 text-primary" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
 
-        {activeTab === "reviews" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Community Feedback</h2>
-            <div className="bg-secondary/20 border border-white/5 rounded-[40px] overflow-hidden">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted">
-                    <th className="px-8 py-6">Customer</th>
-                    <th className="px-8 py-6">Rating</th>
-                    <th className="px-8 py-6">Review</th>
-                    <th className="px-8 py-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {reviews.map((review) => (
-                    <tr key={review.id} className="group hover:bg-white/5 transition-colors">
-                      <td className="px-8 py-6 font-bold">{review.userName}</td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-1 text-primary">
-                          <Star className="w-3 h-3 fill-current" />
-                          <span className="font-bold">{review.rating}</span>
+            {activeTab === "vendors" && (
+              <motion.div 
+                key="vendors"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <h2 className="text-3xl font-bold text-white">Kitchen Partners</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {vendorsList.map((vendor) => (
+                    <div key={vendor.id} className="bg-secondary/20 border border-white/5 p-8 rounded-[40px] flex flex-col justify-between shadow-2xl hover:border-primary/20 transition-all group">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors">{vendor.name}</h3>
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border",
+                            vendor.status === 'active' ? "border-emerald-500/20 text-emerald-500 bg-emerald-500/5" : "border-amber-500/20 text-amber-500 bg-amber-500/5"
+                          )}>
+                            {vendor.status || 'Pending'}
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-8 py-6 text-sm">{review.comment}</td>
-                      <td className="px-8 py-6 text-right">
-                        <Trash2 className="w-4 h-4 text-red-500 cursor-pointer" />
-                      </td>
-                    </tr>
+                        <p className="text-xs text-muted leading-relaxed line-clamp-2 font-bold">{vendor.description}</p>
+                        <div className="flex items-center gap-4 text-[9px] font-black text-white/30 uppercase tracking-widest">
+                          <span className="flex items-center gap-1">
+                            <MapPinIcon className="w-3 h-3" /> {vendor.location || "Patna"}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-8 flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
+                          <Star className="w-3 h-3 text-primary fill-current" />
+                          <span className="font-black text-xs text-white">
+                            {vendor.totalReviewCount > 0 
+                              ? (vendor.totalRatingSum / vendor.totalReviewCount).toFixed(1)
+                              : "N/A"}
+                          </span>
+                        </div>
+                        {vendor.status !== 'active' && (
+                          <button 
+                            onClick={() => handleApproveVendor(vendor.id)}
+                            className="px-6 py-3 bg-primary text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-glow"
+                          >
+                            Approve Kitchen
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+                </div>
+              </motion.div>
+            )}
 
-        {activeTab === "vendors" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Kitchen Partners</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {vendorsList.map((vendor) => (
-                <div key={vendor.id} className="bg-secondary/20 border border-white/5 p-6 rounded-4xl space-y-4">
-                  <h3 className="text-lg font-bold truncate">{vendor.name}</h3>
-                  <div className="flex justify-between text-xs text-muted">
-                    <span>Plate: ₹{vendor.pricePerLunch}</span>
-                    <span>Rating: {(vendor.totalRatingSum / (vendor.totalReviewCount || 1)).toFixed(1)}</span>
+            {activeTab === "payouts" && (
+              <motion.div 
+                key="payouts"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-white">Vendor Payouts</h2>
+                  <div className="px-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted">
+                    Next Cycle: May 1st
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div className="bg-secondary/20 border border-white/5 rounded-[40px] p-8 space-y-4 shadow-2xl">
+                  {vendorsList.map((vendor) => {
+                    const unpaid = vendor.pendingBalance || 0;
+                    const isSettled = unpaid === 0;
+                    return (
+                      <div key={vendor.id} className="flex items-center justify-between p-6 bg-white/5 rounded-[32px] border border-white/5 hover:border-primary/10 transition-all group">
+                        <div className="flex items-center gap-6">
+                          <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <Store className="w-7 h-7" />
+                          </div>
+                          <div>
+                            <p className="font-black text-white uppercase tracking-wider">{vendor.name}</p>
+                            <p className="text-[10px] text-muted font-black font-mono tracking-tighter uppercase">Kitchen ID: {vendor.id.slice(0,12)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-12">
+                          <div className="text-right">
+                            <p className="text-[9px] text-muted font-black uppercase tracking-widest mb-1">Unpaid Balance</p>
+                            <p className={cn("text-2xl font-black", isSettled ? "text-emerald-500" : "text-white")}>
+                              {isSettled ? "SETTLED" : `₹${unpaid}`}
+                            </p>
+                          </div>
+                          {!isSettled && (
+                            <button 
+                              onClick={() => {
+                                if (confirm(`Settle ₹${unpaid} for ${vendor.name}?`)) {
+                                  handleSettleDues(vendor.id, unpaid);
+                                }
+                              }}
+                              className="px-8 py-4 bg-primary text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-glow"
+                            >
+                              Settle Dues
+                            </button>
+                          )}
+                          {isSettled && (
+                            <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20">
+                              <CheckCircle2 className="w-6 h-6" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
 
-        {activeTab === "payouts" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Vendor Payouts</h2>
-            <div className="bg-secondary/20 border border-white/5 rounded-[40px] p-8 space-y-4">
-              {vendorsList.map((vendor) => {
-                const unpaid = vendor.pendingBalance || 0;
-                const isSettled = unpaid === 0;
-                return (
-                  <div key={vendor.id} className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5">
-                    <div>
-                      <p className="font-bold">{vendor.name}</p>
-                      <p className="text-[10px] text-muted font-mono tracking-tighter">ID: {vendor.id.slice(0,8)}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[10px] text-muted font-bold uppercase mb-1">Unpaid Balance</p>
-                      <p className={cn("text-xl font-bold", isSettled ? "text-emerald-500" : "text-white")}>
-                        {isSettled ? "Settled" : `₹${unpaid}`}
-                      </p>
-                    </div>
-                    {!isSettled && (
-                      <button 
-                        onClick={() => handleSettleDues(vendor.id, unpaid)}
-                        className="px-6 py-3 bg-emerald-500 text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
-                      >
-                        Settle Dues
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+            {activeTab === "reviews" && (
+              <motion.div 
+                key="reviews"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <h2 className="text-3xl font-bold text-white">Community Feedback</h2>
+                <div className="bg-secondary/20 border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-muted">
+                        <th className="px-8 py-6">Customer</th>
+                        <th className="px-8 py-6">Rating</th>
+                        <th className="px-8 py-6">Review</th>
+                        <th className="px-8 py-6 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {reviews.map((review) => (
+                        <tr key={review.id} className="group hover:bg-white/5 transition-colors">
+                          <td className="px-8 py-6 font-black text-white uppercase tracking-tight">{review.userName}</td>
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-1 text-primary bg-primary/10 px-3 py-1 rounded-full w-fit border border-primary/20">
+                              <Star className="w-3 h-3 fill-current" />
+                              <span className="font-black text-xs">{review.rating}</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-xs text-muted font-bold max-w-md leading-relaxed">{review.comment}</td>
+                          <td className="px-8 py-6 text-right">
+                            <button 
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this review?")) {
+                                  import("@/lib/firestore").then(m => m.deleteReview(review.id));
+                                }
+                              }}
+                              className="p-3 hover:bg-red-500/10 rounded-2xl transition-all group/trash"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500 group-hover/trash:scale-110 transition-transform" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
+}
+
+function MapPinIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
 }
