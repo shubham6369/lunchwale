@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firestore";
+import { db } from "@/lib/firebase";
 import { 
   collection, 
   query, 

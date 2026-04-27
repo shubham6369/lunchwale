@@ -82,12 +82,24 @@ export default function Navbar() {
                   className="flex items-center gap-3 p-1 pl-4 bg-white/5 hover:bg-white/10 rounded-full border border-white/5 transition-all"
                 >
                   <div className="hidden md:block text-right">
-                    <div className="text-[10px] font-black text-white leading-none">Verified</div>
-                    <div className="text-[9px] text-muted font-bold">{user.phoneNumber}</div>
+                    <div className="text-[10px] font-black text-white leading-none">
+                      {profile?.displayName || user.displayName || "Verified"}
+                    </div>
+                    <div className="text-[9px] text-muted font-bold">
+                      {user.email || user.phoneNumber || "Member"}
+                    </div>
                   </div>
-                  <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm">
-                    {user.phoneNumber?.slice(-2) || "U"}
-                  </div>
+                  {user.photoURL ? (
+                    <img 
+                      src={user.photoURL} 
+                      alt="avatar" 
+                      className="w-9 h-9 rounded-full object-cover border border-primary/40"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm">
+                      {(profile?.displayName || user.displayName || user.phoneNumber || "U")[0].toUpperCase()}
+                    </div>
+                  )}
                 </button>
 
                 <AnimatePresence>
