@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { getVendorDishes, upsertDish, deleteDish } from "@/lib/firestore";
+import { cn } from "@/lib/utils";
 
 interface Dish {
   id: string;
@@ -34,6 +35,9 @@ export default function VendorMenuPage() {
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [isAdding, setIsAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   const [formData, setFormData] = useState({
     name: "",

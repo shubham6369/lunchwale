@@ -2,12 +2,18 @@
 
 import React from "react";
 import Link from "next/link";
-import { 
-  Facebook, 
-  Twitter, 
-  Instagram,
-  ExternalLink
-} from "lucide-react";
+import { ExternalLink } from "lucide-react";
+
+// Inline SVG icons to avoid lucide-react version gaps
+const FacebookIcon = () => (
+  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+);
+const TwitterIcon = () => (
+  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+);
+const InstagramIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+);
 
 export default function Footer() {
   return (
@@ -69,13 +75,13 @@ export default function Footer() {
             <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">Social Links</h4>
             <div className="flex gap-4">
               <Link href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <Facebook className="w-4 h-4" />
+                <FacebookIcon />
               </Link>
               <Link href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <Twitter className="w-4 h-4" />
+                <TwitterIcon />
               </Link>
               <Link href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <Instagram className="w-4 h-4" />
+                <InstagramIcon />
               </Link>
             </div>
           </div>

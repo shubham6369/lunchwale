@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, MapPin, MessageCircle } from "lucide-react";
+import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, MapPin, MessageCircle, DollarSign } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/firestore";

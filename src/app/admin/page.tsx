@@ -49,6 +49,7 @@ export default function AdminDashboard() {
   const [usersList, setUsersList] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Check for master auth on mount
   useEffect(() => {
@@ -142,6 +143,11 @@ export default function AdminDashboard() {
     };
   }, [authLoading, user, profile, isMasterAuthenticated]);
 
+  // Reset search when changing tabs
+  useEffect(() => {
+    setSearchTerm("");
+  }, [activeTab]);
+
   const handleSettleDues = async (vendorId: string, amount: number) => {
     try {
       const { settleVendorPayout } = await import("@/lib/firestore");
@@ -163,6 +169,67 @@ export default function AdminDashboard() {
       toast.error("Failed to approve vendor.");
     }
   };
+
+  const handleChangeRole = async (userId: string, newRole: string) => {
+    try {
+      const { updateUserProfile } = await import("@/lib/firestore");
+      await updateUserProfile(userId, { role: newRole });
+      toast.success(`Role updated to ${newRole}`);
+    } catch (error) {
+      console.error("Failed to update role:", error);
+      toast.error("Role update failed.");
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      const { deleteReview } = await import("@/lib/firestore");
+      await deleteReview(reviewId);
+      toast.success("Review deleted");
+    } catch (error) {
+      console.error("Failed to delete review:", error);
+      toast.error("Delete failed.");
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { updateOrderStatus } = await import("@/lib/firestore");
+      await updateOrderStatus(orderId, newStatus);
+      toast.success(`Order status: ${newStatus}`);
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+      toast.error("Update failed.");
+    }
+  };
+
+  const filteredUsers = usersList.filter(u => 
+    u.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.phoneNumber?.includes(searchTerm) ||
+    u.role?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredOrders = allOrders.filter(o => 
+    o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    o.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.vendorName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredVendors = vendorsList.filter(v => 
+    v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    v.location?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredReviews = reviews.filter(r => 
+    r.userName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    r.comment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.vendorName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredPayouts = vendorsList.filter(v => 
+    v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (v.pendingBalance && v.pendingBalance > 0)
+  );
 
   if (authLoading) {
     return (
@@ -251,6 +318,13 @@ export default function AdminDashboard() {
                     <p className="text-muted text-sm font-bold uppercase tracking-widest">Real-time system performance metrics</p>
                   </div>
                   <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="px-4 py-2 bg-secondary/40 border border-white/5 rounded-2xl flex items-center gap-2 hover:bg-white/10 transition-all"
+                    >
+                      <Activity className="w-4 h-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Refresh Stats</span>
+                    </button>
                     <div className="px-4 py-2 bg-secondary/40 border border-white/5 rounded-2xl flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       <span className="text-[10px] font-black uppercase tracking-widest text-white">Live Data</span>
@@ -339,35 +413,19 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* System Status & Health */}
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-bold px-2 text-white">System Health</h2>
-                    <div className="bg-secondary/20 border border-white/5 rounded-[40px] p-8 space-y-8 shadow-2xl">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse" />
-                          <span className="text-xs font-black uppercase tracking-widest text-emerald-500">All Systems Normal</span>
-                        </div>
-                        <span className="text-[10px] text-muted font-bold">v1.0.4-S</span>
-                      </div>
-                      
-                      <div className="space-y-6">
-                        {[
-                          { label: "Cloud Firestore", status: "Connected", latency: "12ms" },
-                          { label: "Auth Service", status: "Active", latency: "45ms" },
-                          { label: "Asset Storage", status: "Active", latency: "110ms" },
-                        ].map((s) => (
-                          <div key={s.label} className="space-y-2">
-                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                              <span className="text-muted">{s.label}</span>
-                              <span className="text-white">{s.status}</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                              <div className="h-full bg-primary/40 w-[95%] rounded-full" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="bg-secondary/20 border border-white/5 rounded-[40px] p-8 space-y-6 shadow-2xl">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted px-2">Quick Actions</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button className="p-6 bg-white/5 border border-white/5 rounded-3xl hover:border-primary/30 transition-all text-left group">
+                        <Activity className="w-6 h-6 text-primary mb-4 group-hover:scale-110 transition-transform" />
+                        <p className="text-xs font-black text-white uppercase tracking-wider">Broadcast Notice</p>
+                        <p className="text-[9px] text-muted font-bold mt-1 uppercase">Send to all users</p>
+                      </button>
+                      <button className="p-6 bg-white/5 border border-white/5 rounded-3xl hover:border-red-500/30 transition-all text-left group">
+                        <ShieldCheck className="w-6 h-6 text-red-500 mb-4 group-hover:scale-110 transition-transform" />
+                        <p className="text-xs font-black text-white uppercase tracking-wider">Maintenance Mode</p>
+                        <p className="text-[9px] text-muted font-bold mt-1 uppercase">Restrict access</p>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -389,6 +447,8 @@ export default function AdminDashboard() {
                     <input 
                       type="text" 
                       placeholder="Search users..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-12 pr-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl outline-none focus:border-primary/50 transition-all text-xs w-64 text-white"
                     />
                   </div>
@@ -404,7 +464,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {usersList.map((u) => (
+                      {filteredUsers.map((u) => (
                         <tr key={u.id} className="group hover:bg-white/5 transition-colors">
                           <td className="px-8 py-6">
                             <div className="flex items-center gap-4">
@@ -418,14 +478,15 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="px-8 py-6">
-                            <span className={cn(
-                              "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
-                              u.role === 'admin' ? "bg-red-500/10 text-red-500 border border-red-500/20" : 
-                              u.role === 'vendor' ? "bg-orange-500/10 text-orange-500 border border-orange-500/20" : 
-                              "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                            )}>
-                              {u.role}
-                            </span>
+                            <select 
+                              value={u.role || 'customer'}
+                              onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                              className="bg-secondary/40 border border-white/5 rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest text-white outline-none cursor-pointer"
+                            >
+                              <option value="customer">Customer</option>
+                              <option value="vendor">Vendor</option>
+                              <option value="admin">Admin</option>
+                            </select>
                           </td>
                           <td className="px-8 py-6 text-xs text-muted font-bold">
                             {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : "Historical"}
@@ -454,6 +515,16 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <h2 className="text-3xl font-bold text-white">Full Order History</h2>
                   <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                      <input 
+                        type="text" 
+                        placeholder="Search orders..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-12 pr-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl outline-none focus:border-primary/50 transition-all text-xs w-64 text-white"
+                      />
+                    </div>
                     <button className="p-3 bg-secondary/40 border border-white/5 rounded-2xl text-muted hover:text-white transition-all">
                       <Filter className="w-4 h-4" />
                     </button>
@@ -472,7 +543,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {allOrders.map((o) => (
+                      {filteredOrders.map((o) => (
                         <tr key={o.id} className="group hover:bg-white/5 transition-colors">
                           <td className="px-8 py-6">
                             <p className="text-[10px] font-black font-mono text-white/60 mb-1">#{o.id.slice(-8).toUpperCase()}</p>
@@ -485,11 +556,19 @@ export default function AdminDashboard() {
                           <td className="px-8 py-6 text-xs font-bold text-muted">{o.vendorName}</td>
                           <td className="px-8 py-6 font-black text-white text-sm">₹{o.total}</td>
                           <td className="px-8 py-6">
-                            <span className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest", 
-                              o.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
-                            )}>
-                              {o.status}
-                            </span>
+                            <select 
+                              value={o.status || 'pending'}
+                              onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
+                              className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest outline-none bg-transparent cursor-pointer", 
+                                o.status === 'delivered' ? 'text-emerald-500 border border-emerald-500/20' : 'text-amber-500 border border-amber-500/20'
+                              )}
+                            >
+                              <option value="pending" className="bg-black text-white">Pending</option>
+                              <option value="processing" className="bg-black text-white">Processing</option>
+                              <option value="shipped" className="bg-black text-white">Shipped</option>
+                              <option value="delivered" className="bg-black text-white">Delivered</option>
+                              <option value="cancelled" className="bg-black text-white">Cancelled</option>
+                            </select>
                           </td>
                           <td className="px-8 py-6 text-right">
                             <button onClick={() => router.push(`/orders/${o.id}`)} className="p-2 hover:bg-white/10 rounded-xl">
@@ -512,9 +591,21 @@ export default function AdminDashboard() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                <h2 className="text-3xl font-bold text-white">Kitchen Partners</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-white">Kitchen Partners</h2>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                    <input 
+                      type="text" 
+                      placeholder="Search kitchens..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-12 pr-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl outline-none focus:border-primary/50 transition-all text-xs w-64 text-white"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {vendorsList.map((vendor) => (
+                  {filteredVendors.map((vendor) => (
                     <div key={vendor.id} className="bg-secondary/20 border border-white/5 p-8 rounded-[40px] flex flex-col justify-between shadow-2xl hover:border-primary/20 transition-all group">
                       <div className="space-y-4">
                         <div className="flex items-start justify-between">
@@ -543,14 +634,28 @@ export default function AdminDashboard() {
                               : "N/A"}
                           </span>
                         </div>
-                        {vendor.status !== 'active' && (
+                        <div className="flex items-center gap-3">
+                          {vendor.status !== 'active' && (
+                            <button 
+                              onClick={() => handleApproveVendor(vendor.id)}
+                              className="px-6 py-3 bg-primary text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-glow"
+                            >
+                              Approve
+                            </button>
+                          )}
                           <button 
-                            onClick={() => handleApproveVendor(vendor.id)}
-                            className="px-6 py-3 bg-primary text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-glow"
+                            onClick={async () => {
+                              if (confirm(`Are you sure you want to REJECT ${vendor.name}?`)) {
+                                const { updateVendorStatus } = await import("@/lib/firestore");
+                                await updateVendorStatus(vendor.id, "rejected");
+                                toast.error("Vendor Rejected");
+                              }
+                            }}
+                            className="px-6 py-3 bg-white/5 text-red-500 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500/10 transition-all"
                           >
-                            Approve Kitchen
+                            Reject
                           </button>
-                        )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -568,12 +673,24 @@ export default function AdminDashboard() {
               >
                 <div className="flex items-center justify-between">
                   <h2 className="text-3xl font-bold text-white">Vendor Payouts</h2>
-                  <div className="px-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted">
-                    Next Cycle: May 1st
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                      <input 
+                        type="text" 
+                        placeholder="Search payouts..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-12 pr-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl outline-none focus:border-primary/50 transition-all text-xs w-64 text-white"
+                      />
+                    </div>
+                    <div className="px-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted">
+                      Next Cycle: May 1st
+                    </div>
                   </div>
                 </div>
                 <div className="bg-secondary/20 border border-white/5 rounded-[40px] p-8 space-y-4 shadow-2xl">
-                  {vendorsList.map((vendor) => {
+                  {filteredPayouts.map((vendor) => {
                     const unpaid = vendor.pendingBalance || 0;
                     const isSettled = unpaid === 0;
                     return (
@@ -627,7 +744,19 @@ export default function AdminDashboard() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                <h2 className="text-3xl font-bold text-white">Community Feedback</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-white">Community Feedback</h2>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                    <input 
+                      type="text" 
+                      placeholder="Search reviews..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-12 pr-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl outline-none focus:border-primary/50 transition-all text-xs w-64 text-white"
+                    />
+                  </div>
+                </div>
                 <div className="bg-secondary/20 border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
                   <table className="w-full text-left">
                     <thead>
@@ -639,7 +768,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {reviews.map((review) => (
+                      {filteredReviews.map((review) => (
                         <tr key={review.id} className="group hover:bg-white/5 transition-colors">
                           <td className="px-8 py-6 font-black text-white uppercase tracking-tight">{review.userName}</td>
                           <td className="px-8 py-6">
@@ -651,11 +780,7 @@ export default function AdminDashboard() {
                           <td className="px-8 py-6 text-xs text-muted font-bold max-w-md leading-relaxed">{review.comment}</td>
                           <td className="px-8 py-6 text-right">
                             <button 
-                              onClick={() => {
-                                if (confirm("Are you sure you want to delete this review?")) {
-                                  import("@/lib/firestore").then(m => m.deleteReview(review.id));
-                                }
-                              }}
+                              onClick={() => handleDeleteReview(review.id)}
                               className="p-3 hover:bg-red-500/10 rounded-2xl transition-all group/trash"
                             >
                               <Trash2 className="w-4 h-4 text-red-500 group-hover/trash:scale-110 transition-transform" />
