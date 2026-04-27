@@ -22,7 +22,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 mb-16">
           {/* ABOUT LUNCHNOW */}
           <div>
-            <h4 className="text-[13px] font-bold tracking-[0.1em] mb-5 uppercase">About LunchNow</h4>
+            <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">About LunchNow</h4>
             <ul className="space-y-3 text-[13px] text-gray-400 font-medium">
               <li><Link href="#" className="hover:text-white transition-colors">Who We Are</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
@@ -35,7 +35,7 @@ export default function Footer() {
 
           {/* LUNCHVERSE */}
           <div>
-            <h4 className="text-[13px] font-bold tracking-[0.1em] mb-5 uppercase">LunchVerse</h4>
+            <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">LunchVerse</h4>
             <ul className="space-y-3 text-[13px] text-gray-400 font-medium">
               <li><Link href="#" className="hover:text-white transition-colors">LunchNow</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Feeding India</Link></li>
@@ -46,7 +46,7 @@ export default function Footer() {
 
           {/* FOR RESTAURANTS */}
           <div>
-            <h4 className="text-[13px] font-bold tracking-[0.1em] mb-5 uppercase">For Restaurants</h4>
+            <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">For Restaurants</h4>
             <ul className="space-y-3 text-[13px] text-gray-400 font-medium">
               <li><Link href="#" className="hover:text-white transition-colors">Partner With Us</Link></li>
             </ul>
@@ -54,7 +54,7 @@ export default function Footer() {
 
           {/* LEARN MORE */}
           <div>
-            <h4 className="text-[13px] font-bold tracking-[0.1em] mb-5 uppercase">Learn More</h4>
+            <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">Learn More</h4>
             <ul className="space-y-3 text-[13px] text-gray-400 font-medium">
               <li><Link href="#" className="hover:text-white transition-colors">Privacy</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Security</Link></li>
@@ -66,7 +66,7 @@ export default function Footer() {
 
           {/* SOCIAL LINKS */}
           <div>
-            <h4 className="text-[13px] font-bold tracking-[0.1em] mb-5 uppercase">Social Links</h4>
+            <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">Social Links</h4>
             <div className="flex gap-4">
               <Link href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors">
                 <Facebook className="w-4 h-4" />
