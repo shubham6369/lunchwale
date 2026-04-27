@@ -58,10 +58,10 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
 
   const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/vendor" },
-    { icon: ShoppingBag, label: "Orders", href: "/vendor/orders" },
-    { icon: Utensils, label: "Menu Management", href: "/vendor/menu" },
+    { icon: ShoppingBag, label: "Live Orders", href: "/vendor/orders" },
+    { icon: Utensils, label: "Menu", href: "/vendor/menu" },
     { icon: BarChart3, label: "Insights", href: "/vendor/insights" },
-    { icon: Settings, label: "Profile", href: "/vendor/profile" },
+    { icon: Settings, label: "Kitchen Profile", href: "/vendor/profile" },
   ];
 
   return (

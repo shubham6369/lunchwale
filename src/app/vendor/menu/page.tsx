@@ -36,6 +36,7 @@ export default function VendorMenuPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isAdding, setIsAdding] = useState(false);
+  const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -43,9 +44,22 @@ export default function VendorMenuPage() {
     name: "",
     price: "",
     category: "",
+    description: "",
     isVeg: true,
     image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80",
   });
+
+  const openAddForm = () => {
+    setFormData({ name: "", price: "", category: "", description: "", isVeg: true, image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80" });
+    setEditingDish(null);
+    setIsAdding(true);
+  };
+
+  const openEditForm = (dish: Dish) => {
+    setFormData({ name: dish.name, price: String(dish.price), category: dish.category, description: (dish as any).description || "", isVeg: dish.isVeg, image: dish.image });
+    setEditingDish(dish);
+    setIsAdding(true);
+  };
 
   const categories = Array.from(new Set(dishes.map(d => d.category)));
 
@@ -78,24 +92,31 @@ export default function VendorMenuPage() {
   const handleAddDish = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
     setSaving(true);
     try {
-      const newDish = {
+      const dishPayload: any = {
         name: formData.name,
         price: Number(formData.price),
         category: formData.category || "General",
         isVeg: formData.isVeg,
-        isAvailable: true,
+        isAvailable: editingDish ? editingDish.isAvailable : true,
         image: formData.image,
+        description: formData.description,
       };
-      
-      const id = await upsertDish(user.uid, newDish);
-      setDishes(prev => [{ ...newDish, id } as Dish, ...prev]);
+      if (editingDish) {
+        dishPayload.id = editingDish.id;
+      }
+      const id = await upsertDish(user.uid, dishPayload);
+      if (editingDish) {
+        setDishes(prev => prev.map(d => d.id === editingDish.id ? { ...dishPayload, id: editingDish.id } : d));
+      } else {
+        setDishes(prev => [{ ...dishPayload, id } as Dish, ...prev]);
+      }
       setIsAdding(false);
-      setFormData({ name: "", price: "", category: "", isVeg: true, image: formData.image });
+      setEditingDish(null);
+      setFormData({ name: "", price: "", category: "", description: "", isVeg: true, image: formData.image });
     } catch (error) {
-      console.error("Error adding dish:", error);
+      console.error("Error saving dish:", error);
     } finally {
       setSaving(false);
     }
@@ -141,7 +162,7 @@ export default function VendorMenuPage() {
             />
           </div>
           <button 
-            onClick={() => setIsAdding(true)}
+            onClick={openAddForm}
             className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-bold text-sm shadow-glow hover:bg-primary-dark transition-all"
           >
             <Plus className="w-4 h-4" /> Add Dish
@@ -222,8 +243,16 @@ export default function VendorMenuPage() {
 
               <div className="flex items-center gap-2 p-2 bg-white/5 rounded-2xl border border-white/5">
                 <button 
+                  onClick={() => openEditForm(item)}
+                  className="p-3 hover:bg-primary/10 rounded-xl text-muted hover:text-primary transition-all"
+                  title="Edit dish"
+                >
+                  <Edit3 className="w-5 h-5" />
+                </button>
+                <button 
                   onClick={() => handleDelete(item.id)}
                   className="p-3 hover:bg-red-400/10 rounded-xl text-muted hover:text-red-400 transition-all"
+                  title="Delete dish"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -257,7 +286,7 @@ export default function VendorMenuPage() {
             >
               <form onSubmit={handleAddDish}>
                 <div className="p-8 border-b border-white/5 flex items-center justify-between">
-                   <h3 className="text-xl font-bold text-white">Add New Food Item</h3>
+                   <h3 className="text-xl font-bold text-white">{editingDish ? "Edit Dish" : "Add New Food Item"}</h3>
                    <button type="button" onClick={() => setIsAdding(false)} className="p-2 hover:bg-white/5 rounded-full transition-all">
                      <X className="w-5 h-5 text-white" />
                    </button>
@@ -304,6 +333,17 @@ export default function VendorMenuPage() {
                     </datalist>
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted uppercase ml-2">Description (optional)</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      placeholder="e.g. Served with salad and papad" 
+                      rows={2}
+                      className="w-full bg-background border border-white/10 rounded-2xl p-4 text-sm focus:outline-none focus:border-primary transition-all text-white resize-none" 
+                    />
+                  </div>
+
                   <div className="flex items-center gap-6 p-4 bg-white/2 rounded-2xl border border-white/5">
                     <label className="text-[10px] font-bold text-muted uppercase">Type</label>
                     <div className="flex gap-4">
@@ -339,7 +379,7 @@ export default function VendorMenuPage() {
                     type="submit"
                     className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-glow hover:bg-primary-dark transition-all mt-4 flex items-center justify-center gap-2"
                   >
-                    {saving ? <Loader2 className="animate-spin" /> : "Confirm & Add Item"}
+                    {saving ? <Loader2 className="animate-spin" /> : (editingDish ? "Save Changes" : "Confirm & Add Item")}
                   </button>
                 </div>
               </form>
