@@ -21,6 +21,8 @@ export default function VendorsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [minRating, setMinRating] = useState(0);
+  const [isPureVeg, setIsPureVeg] = useState(false);
   const { cartCount } = useCart();
   const { user } = useAuth();
 
@@ -40,7 +42,9 @@ export default function VendorsPage() {
     const matchesCategory = selectedCategory === "All" || tags.some((t: string) => t.includes(selectedCategory));
     const matchesSearch = vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (vendor.location && vendor.location.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
+    const matchesRating = (vendor.rating || 0) >= minRating;
+    const matchesVeg = !isPureVeg || vendor.isPureVeg || tags.some((t: string) => t.toLowerCase() === 'pure veg');
+    return matchesCategory && matchesSearch && matchesRating && matchesVeg;
   });
 
   return (
@@ -53,7 +57,11 @@ export default function VendorsPage() {
             <div className="p-8 rounded-[32px] bg-secondary/30 border border-white/5">
               <VendorFilters 
                 selectedCategory={selectedCategory} 
-                onSelectCategory={setSelectedCategory} 
+                onSelectCategory={setSelectedCategory}
+                minRating={minRating}
+                onSelectRating={setMinRating}
+                isPureVeg={isPureVeg}
+                onTogglePureVeg={setIsPureVeg}
               />
             </div>
             
@@ -129,7 +137,7 @@ export default function VendorsPage() {
                 <h3 className="text-xl font-bold mb-2">No kitchens found</h3>
                 <p className="text-muted text-sm">Try adjusting your filters or search query.</p>
                 <button 
-                  onClick={() => { setSelectedCategory("All"); setSearchQuery(""); }}
+                  onClick={() => { setSelectedCategory("All"); setSearchQuery(""); setMinRating(0); setIsPureVeg(false); }}
                   className="mt-6 text-primary font-bold hover:underline"
                 >
                   Clear all filters

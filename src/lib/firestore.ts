@@ -9,19 +9,50 @@ import {
   where, 
   getDocs,
   orderBy,
-  Timestamp,
   serverTimestamp,
   increment,
   runTransaction,
   deleteDoc,
-  limit
+  limit,
+  arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 import { app } from "./firebase";
+
+export interface UserData {
+  displayName?: string;
+  phoneNumber?: string;
+  [key: string]: unknown;
+}
+
+export interface OrderData {
+  userId: string;
+  vendorId: string;
+  total: number;
+  items: unknown[];
+  [key: string]: unknown;
+}
+
+export interface DishData {
+  id?: string;
+  name: string;
+  price: number;
+  [key: string]: unknown;
+}
+
+export interface OfferData {
+  id?: string;
+  code: string;
+  discountPercentage: number;
+  minOrderValue: number;
+  validUntil: string;
+  isActive: boolean;
+}
 
 export const db = getFirestore(app);
 
 // User Profile Operations
-export const createUserProfile = async (uid: string, data: any) => {
+export const createUserProfile = async (uid: string, data: UserData) => {
   const userRef = doc(db, "users", uid);
   await setDoc(userRef, {
     uid,
@@ -31,7 +62,7 @@ export const createUserProfile = async (uid: string, data: any) => {
   }, { merge: true });
 };
 
-export const updateUserProfile = async (uid: string, data: any) => {
+export const updateUserProfile = async (uid: string, data: UserData) => {
   const userRef = doc(db, "users", uid);
   await setDoc(userRef, {
     ...data,
@@ -45,8 +76,45 @@ export const getUserProfile = async (uid: string) => {
   return snap.exists() ? snap.data() : null;
 };
 
+// Wishlist / Favorites Operations
+export const toggleFavorite = async (uid: string, vendorId: string, isAdding: boolean) => {
+  const userRef = doc(db, "users", uid);
+  await setDoc(userRef, {
+    favorites: isAdding ? arrayUnion(vendorId) : arrayRemove(vendorId),
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+};
+
+export const getFavoriteVendors = async (uid: string) => {
+  const userProfile = await getUserProfile(uid);
+  if (!userProfile || !userProfile.favorites || userProfile.favorites.length === 0) {
+    return [];
+  }
+  
+  const vendorIds = userProfile.favorites;
+  // Firestore 'in' queries support up to 10 items.
+  // For a robust implementation, we might chunk them, but for MVP we will fetch them up to 10.
+  const vendorsRef = collection(db, "vendors");
+  const chunks = [];
+  for (let i = 0; i < vendorIds.length; i += 10) {
+    const chunk = vendorIds.slice(i, i + 10);
+    const q = query(vendorsRef, where("__name__", "in", chunk));
+    chunks.push(getDocs(q));
+  }
+  
+  const snapshots = await Promise.all(chunks);
+  const vendors: Record<string, unknown>[] = [];
+  snapshots.forEach(snap => {
+    snap.docs.forEach(doc => {
+      vendors.push({ id: doc.id, ...doc.data() });
+    });
+  });
+  
+  return vendors;
+};
+
 // Order Operations
-export const createOrder = async (orderData: any) => {
+export const createOrder = async (orderData: OrderData) => {
   const ordersRef = collection(db, "orders");
   const docRef = await addDoc(ordersRef, {
     ...orderData,
@@ -173,7 +241,7 @@ export const updateVendorAvailability = async (vendorId: string, isOpen: boolean
 };
 
 // Dish Operations (Sub-collection)
-export const upsertDish = async (vendorId: string, dishData: any) => {
+export const upsertDish = async (vendorId: string, dishData: DishData) => {
   const dishId = dishData.id || doc(collection(db, "dummy")).id; // Use existing ID or generate one
   const dishRef = doc(db, "vendors", vendorId, "dishes", dishId);
   
@@ -251,4 +319,31 @@ export const getAllDishes = async (limitCount = 50) => {
     console.error("Error fetching all dishes:", error);
     return [];
   }
+};
+
+// Offer Operations (Sub-collection)
+export const upsertVendorOffer = async (vendorId: string, offerData: OfferData) => {
+  const offerId = offerData.id || doc(collection(db, "dummy")).id;
+  const offerRef = doc(db, "vendors", vendorId, "offers", offerId);
+  
+  await setDoc(offerRef, {
+    ...offerData,
+    id: offerId,
+    vendorId,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+  
+  return offerId;
+};
+
+export const deleteVendorOffer = async (vendorId: string, offerId: string) => {
+  const offerRef = doc(db, "vendors", vendorId, "offers", offerId);
+  await deleteDoc(offerRef);
+};
+
+export const getVendorOffers = async (vendorId: string) => {
+  const offersRef = collection(db, "vendors", vendorId, "offers");
+  const q = query(offersRef, orderBy("createdAt", "desc"));
+  const snap = await getDocs(q);
+  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as OfferData));
 };

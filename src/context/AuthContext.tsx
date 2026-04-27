@@ -19,6 +19,7 @@ interface UserProfile {
   photoURL?: string;
   role: "customer" | "vendor" | "admin";
   address?: string;
+  favorites?: string[];
 }
 
 interface AuthContextType {

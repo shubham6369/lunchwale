@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Phone, MapPin, Mail, Save, ArrowLeft, Loader2, CheckCircle2, Camera } from "lucide-react";
+import { User, Phone, MapPin, Mail, Save, ArrowLeft, Loader2, CheckCircle2, Heart } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { getUserProfile, updateUserProfile } from "@/lib/firestore";
+import { getUserProfile, updateUserProfile, getFavoriteVendors } from "@/lib/firestore";
+import VendorCard from "@/components/VendorCard";
 
 export default function ProfilePage() {
   const { user, profile: authProfile } = useAuth();
@@ -13,6 +14,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<"settings" | "favorites">("settings");
+  const [favorites, setFavorites] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -26,11 +29,20 @@ export default function ProfilePage() {
           address: "",
           ...data,
         });
+        
+        // Fetch favorites
+        try {
+          const favs = await getFavoriteVendors(user.uid);
+          setFavorites(favs);
+        } catch (error) {
+          console.error("Error fetching favorites:", error);
+        }
+        
         setLoading(false);
       }
     };
     fetchProfile();
-  }, [user]);
+  }, [user, authProfile?.favorites]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,8 +123,29 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Form */}
-        <div className="bg-secondary/20 border border-white/5 p-8 rounded-3xl space-y-6 relative">
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6 border-b border-white/5 pb-2">
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`pb-2 px-2 text-sm font-bold border-b-2 transition-colors ${
+              activeTab === "settings" ? "border-primary text-primary" : "border-transparent text-muted hover:text-white"
+            }`}
+          >
+            Settings
+          </button>
+          <button
+            onClick={() => setActiveTab("favorites")}
+            className={`pb-2 px-2 text-sm font-bold border-b-2 transition-colors ${
+              activeTab === "favorites" ? "border-primary text-primary" : "border-transparent text-muted hover:text-white"
+            }`}
+          >
+            Favorites
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "settings" ? (
+          <div className="bg-secondary/20 border border-white/5 p-8 rounded-3xl space-y-6 relative">
           {success && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -193,6 +226,37 @@ export default function ProfilePage() {
             </button>
           </form>
         </div>
+        ) : (
+          <div className="space-y-6">
+            {favorites.length === 0 ? (
+              <div className="bg-secondary/20 border border-white/5 p-8 rounded-3xl text-center">
+                <Heart className="w-12 h-12 text-muted mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">No Favorites Yet</h3>
+                <p className="text-muted text-sm mb-6">Explore our kitchens and save your favorites here.</p>
+                <Link href="/vendors" className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-sm transition-all inline-block">
+                  Find Kitchens
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {favorites.map((vendor) => (
+                  <VendorCard
+                    key={vendor.id}
+                    id={vendor.id}
+                    name={vendor.name}
+                    image={vendor.branding?.bannerImage || "/images/placeholder-kitchen.jpg"}
+                    rating={vendor.totalReviewCount ? Number((vendor.totalRatingSum / vendor.totalReviewCount).toFixed(1)) : 4.5}
+                    location={vendor.location?.address || "Unknown"}
+                    pricePerLunch={vendor.pricing?.pricePerLunch || 0}
+                    monthlyPlan={vendor.pricing?.monthlyPlanPrice || 0}
+                    tags={vendor.cuisineTags || []}
+                    isPopular={vendor.totalReviewCount > 20}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Quick links */}
         <div className="mt-6 grid grid-cols-2 gap-4">

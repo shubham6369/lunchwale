@@ -8,10 +8,14 @@ import {
   MapPin, 
   Package, 
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  Star,
+  X,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { submitReview } from "@/lib/firestore";
 import { 
   collection, 
   query, 
@@ -22,9 +26,15 @@ import {
 } from "firebase/firestore";
 
 export default function OrdersPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Review Modal State
+  const [reviewOrder, setReviewOrder] = useState<any>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -48,6 +58,30 @@ export default function OrdersPage() {
 
     return () => unsubscribe();
   }, [user]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !reviewOrder) return;
+    setSubmittingReview(true);
+    try {
+      await submitReview({
+        orderId: reviewOrder.id,
+        vendorId: reviewOrder.vendorId, // Ensure vendorId is part of the order data when creating
+        userId: user.uid,
+        userName: profile?.displayName || user.email || "Customer",
+        rating,
+        comment
+      });
+      setReviewOrder(null);
+      setRating(5);
+      setComment("");
+    } catch (error) {
+      console.error("Failed to submit review", error);
+      alert("Failed to submit review. Please try again.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const statusMap: any = {
     pending: { label: "Order Placed", color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
@@ -142,15 +176,26 @@ export default function OrdersPage() {
                       </div>
                     </div>
 
-                    {/* Price + Track */}
+                    {/* Price + Actions */}
                     <div className="flex flex-col items-end gap-3">
                       <div className="text-3xl font-black italic tracking-tighter text-white">₹{order.total}</div>
-                      <Link
-                        href={`/orders/${order.id}`}
-                        className="px-5 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-                      >
-                        Track Order →
-                      </Link>
+                      
+                      <div className="flex gap-2">
+                        {order.status === "delivered" && !order.isReviewed && (
+                          <button
+                            onClick={() => setReviewOrder(order)}
+                            className="px-5 py-2 bg-amber-400 text-black hover:bg-amber-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-glow"
+                          >
+                            Leave Review
+                          </button>
+                        )}
+                        <Link
+                          href={`/orders/${order.id}`}
+                          className="px-5 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                        >
+                          {order.status === "delivered" ? "View Details" : "Track Order"} →
+                        </Link>
+                      </div>
                     </div>
                   </div>
 
@@ -173,6 +218,69 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {reviewOrder && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-secondary w-full max-w-md rounded-[32px] border border-white/10 p-6 relative"
+            >
+              <button 
+                onClick={() => setReviewOrder(null)}
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/5 text-muted transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <h2 className="text-2xl font-bold text-white mb-2">Leave a Review</h2>
+              <p className="text-muted text-sm mb-6">How was your order from {reviewOrder.vendorName || "the kitchen"}?</p>
+              
+              <form onSubmit={handleReviewSubmit} className="space-y-6">
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className="p-2 transition-transform hover:scale-110 active:scale-95"
+                    >
+                      <Star 
+                        className={`w-10 h-10 ${rating >= star ? "fill-amber-400 text-amber-400" : "text-white/20"}`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+                
+                <div>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Tell us what you liked (or didn't like)..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 resize-none h-32"
+                  ></textarea>
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="w-full py-4 bg-primary text-black font-bold rounded-2xl disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-glow"
+                >
+                  {submittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Review"}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

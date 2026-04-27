@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   LayoutDashboard,
-  ChefHat
+  ChefHat,
+  Tag
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getVendor } from "@/lib/firestore";
@@ -60,6 +61,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
     { icon: LayoutDashboard, label: "Overview", href: "/vendor" },
     { icon: ShoppingBag, label: "Live Orders", href: "/vendor/orders" },
     { icon: Utensils, label: "Menu", href: "/vendor/menu" },
+    { icon: Tag, label: "Offers", href: "/vendor/offers" },
     { icon: BarChart3, label: "Insights", href: "/vendor/insights" },
     { icon: Settings, label: "Kitchen Profile", href: "/vendor/profile" },
   ];

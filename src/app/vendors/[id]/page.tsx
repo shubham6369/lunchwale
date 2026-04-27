@@ -34,6 +34,8 @@ import { getVendor } from "@/lib/firestore";
 export default function VendorDetailPage({ params }: { params: { id: string } }) {
   const [vendor, setVendor] = useState<any>(null);
   const [dishes, setDishes] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"menu" | "reviews">("menu");
   const [loading, setLoading] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -46,13 +48,15 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
       setLoading(true);
       const res = await params;
       const id = res.id;
-      const { getVendorDishes } = await import("@/lib/firestore");
-      const [vendorData, dishesData] = await Promise.all([
+      const { getVendorDishes, getVendorReviews } = await import("@/lib/firestore");
+      const [vendorData, dishesData, reviewsData] = await Promise.all([
         getVendor(id),
-        getVendorDishes(id)
+        getVendorDishes(id),
+        getVendorReviews(id)
       ]);
       setVendor(vendorData);
       setDishes(dishesData);
+      setReviews(reviewsData);
       setLoading(false);
     };
     fetchVendorData();
@@ -168,18 +172,37 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
         </div>
       </header>
 
+      {/* Tabs */}
+      <div className="max-w-7xl mx-auto px-4 mt-6">
+        <div className="flex items-center gap-6 border-b border-white/10 pb-4">
+          <button 
+            onClick={() => setActiveTab("menu")}
+            className={cn("text-lg font-bold transition-colors pb-4 -mb-[17px] border-b-2", activeTab === "menu" ? "text-primary border-primary" : "text-muted border-transparent hover:text-white")}
+          >
+            Menu
+          </button>
+          <button 
+            onClick={() => setActiveTab("reviews")}
+            className={cn("text-lg font-bold transition-colors pb-4 -mb-[17px] border-b-2", activeTab === "reviews" ? "text-primary border-primary" : "text-muted border-transparent hover:text-white")}
+          >
+            Reviews
+          </button>
+        </div>
+      </div>
+
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          {dishes.length === 0 ? (
-            <div className="text-center py-20 bg-dark-card border border-dark-border rounded-2xl">
-              <ChefHat className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400">No dishes available yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Featured Dishes</h2>
-              <div className="grid gap-4">
+          {activeTab === "menu" ? (
+            dishes.length === 0 ? (
+              <div className="text-center py-20 bg-dark-card border border-dark-border rounded-2xl">
+                <ChefHat className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400">No dishes available yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold">Featured Dishes</h2>
+                <div className="grid gap-4">
                 {dishes.map((dish, index) => (
                   <motion.div
                     key={dish.id}
@@ -252,7 +275,51 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                 ))}
               </div>
             </div>
-          )}
+          )
+        ) : (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Customer Reviews</h2>
+            {reviews.length === 0 ? (
+              <div className="text-center py-20 bg-dark-card border border-dark-border rounded-2xl">
+                <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400">No reviews yet. Be the first to review!</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {reviews.map((review, idx) => (
+                  <motion.div
+                    key={review.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="bg-dark-card p-6 rounded-xl border border-dark-border space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary">
+                          {review.userName ? review.userName.charAt(0).toUpperCase() : "U"}
+                        </div>
+                        <div>
+                          <p className="font-bold">{review.userName || "LunchNow User"}</p>
+                          <p className="text-xs text-muted">
+                            {review.createdAt ? new Date(review.createdAt.seconds * 1000).toLocaleDateString() : "Just now"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg">
+                        <Star className="w-4 h-4 fill-primary text-primary" />
+                        <span className="font-bold">{review.rating}</span>
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p className="text-gray-300 text-sm leading-relaxed mt-2">{review.comment}</p>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         </div>
 
         {/* Sidebar Sticky Cart / Summary */}

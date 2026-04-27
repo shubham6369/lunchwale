@@ -1,19 +1,26 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Star } from "lucide-react";
 
 import { CATEGORIES } from "@/lib/constants";
 
 interface VendorFiltersProps {
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
+  minRating: number;
+  onSelectRating: (rating: number) => void;
+  isPureVeg: boolean;
+  onTogglePureVeg: (val: boolean) => void;
 }
 
 export default function VendorFilters({ 
   selectedCategory, 
-  onSelectCategory 
+  onSelectCategory,
+  minRating,
+  onSelectRating,
+  isPureVeg,
+  onTogglePureVeg
 }: VendorFiltersProps) {
   return (
     <div className="flex flex-col gap-6">
@@ -61,6 +68,42 @@ export default function VendorFilters({
         <div className="flex justify-between text-[10px] font-bold text-muted">
           <span>₹0</span>
           <span>₹5000+</span>
+        </div>
+      </div>
+
+      <div className="space-y-4 pt-4 border-t border-white/5">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted">Dietary</h4>
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div className="relative">
+            <input 
+              type="checkbox" 
+              checked={isPureVeg} 
+              onChange={(e) => onTogglePureVeg(e.target.checked)}
+              className="sr-only" 
+            />
+            <div className={`block w-10 h-6 rounded-full transition-colors ${isPureVeg ? 'bg-green-500' : 'bg-white/10'}`}></div>
+            <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isPureVeg ? 'translate-x-4' : 'translate-x-0'}`}></div>
+          </div>
+          <span className="text-sm font-semibold group-hover:text-white transition-colors">Pure Veg Only</span>
+        </label>
+      </div>
+
+      <div className="space-y-4 pt-4 border-t border-white/5">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted">Rating</h4>
+        <div className="flex flex-wrap gap-2">
+          {[4.5, 4.0, 3.5].map((rating) => (
+            <button
+              key={rating}
+              onClick={() => onSelectRating(minRating === rating ? 0 : rating)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border flex items-center gap-1 ${
+                minRating === rating
+                  ? "bg-primary text-white border-primary shadow-glow"
+                  : "bg-white/5 text-muted border-white/10 hover:border-white/20"
+              }`}
+            >
+              {rating}+ <Star className="w-3 h-3 fill-current" />
+            </button>
+          ))}
         </div>
       </div>
     </div>

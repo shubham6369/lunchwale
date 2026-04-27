@@ -4,8 +4,10 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Star, MapPin, Clock, ShieldCheck } from "lucide-react";
+import { Star, MapPin, Clock, ShieldCheck, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { toggleFavorite } from "@/lib/firestore";
 
 interface VendorCardProps {
   id: string;
@@ -32,6 +34,40 @@ export default function VendorCard({
   isPopular,
   deliveryTime = "25-35 min"
 }: VendorCardProps) {
+  const { user, profile, updateProfile } = useAuth();
+  
+  const isFavorite = profile?.favorites?.includes(id) || false;
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      // Could show a toast or redirect to login here
+      alert("Please login to save favorites.");
+      return;
+    }
+
+    try {
+      const newIsFavorite = !isFavorite;
+      
+      // Optimistic update
+      const newFavorites = newIsFavorite 
+        ? [...(profile?.favorites || []), id]
+        : (profile?.favorites || []).filter(favId => favId !== id);
+        
+      await updateProfile({ favorites: newFavorites });
+      await toggleFavorite(user.uid, id, newIsFavorite);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      // Revert optimistic update on failure
+      const revertedFavorites = isFavorite 
+        ? [...(profile?.favorites || []), id]
+        : (profile?.favorites || []).filter(favId => favId !== id);
+      await updateProfile({ favorites: revertedFavorites });
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -52,6 +88,20 @@ export default function VendorCard({
               Popular Kitchen
             </div>
           )}
+          
+          <button 
+            onClick={handleToggleFavorite}
+            className="absolute top-4 right-4 p-2 rounded-full glass bg-background/50 hover:bg-background/80 transition-all active:scale-95 group/btn"
+            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Heart 
+              className={cn(
+                "w-5 h-5 transition-colors duration-300", 
+                isFavorite ? "fill-red-500 text-red-500" : "text-white group-hover/btn:text-red-400"
+              )} 
+            />
+          </button>
+
           <div className="absolute bottom-4 right-4 glass px-3 py-1 rounded-lg text-xs font-bold">
             ₹{pricePerLunch} per lunch
           </div>
