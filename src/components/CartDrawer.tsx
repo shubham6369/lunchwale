@@ -85,7 +85,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               alert("Payment verification failed!");
             }
           },
-          prefill: { contact: user.phoneNumber },
+          prefill: { contact: user.phoneNumber || "", email: user.email || "" },
           theme: { color: "#E2B171" },
         };
 
@@ -125,6 +125,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   };
 
   return (
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
     <AnimatePresence>
       {isOpen && (
         <>
@@ -316,5 +318,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         </>
       )}
     </AnimatePresence>
+    </>
   );
 }
