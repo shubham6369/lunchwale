@@ -31,6 +31,10 @@ export default function AdminDashboard() {
   const { user, profile, loading: authLoading } = useAuth();
   const router = useRouter();
   
+  const [isMasterAuthenticated, setIsMasterAuthenticated] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeVendors: 0,
@@ -46,31 +50,50 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
 
-  // Role-based protection: Wait for AUTH to load first
+  // Check for master auth on mount
+  useEffect(() => {
+    const isAuth = sessionStorage.getItem("master_admin_auth") === "true";
+    if (isAuth) setIsMasterAuthenticated(true);
+  }, []);
+
+  const handleMasterLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    // Use the password provided by user: admin123
+    if (adminPassword === "admin123") {
+      sessionStorage.setItem("master_admin_auth", "true");
+      setIsMasterAuthenticated(true);
+      toast.success("Master Admin Authenticated");
+    } else {
+      toast.error("Invalid Admin Credentials");
+    }
+    setIsLoggingIn(false);
+  };
+
+  // Role-based protection: Show login if not admin AND not master authenticated
   useEffect(() => {
     if (!authLoading) {
-      if (!user || profile?.role !== 'admin') {
-        router.replace("/");
-      }
+      // If we're neither a real admin nor master auth'd, we stay on this page but show login
+      // No automatic redirect to home yet, let them try the password
     }
-  }, [user, profile, authLoading, router]);
+  }, [user, profile, authLoading, isMasterAuthenticated]);
 
   useEffect(() => {
-    if (authLoading || !user || profile?.role !== 'admin') return;
+    // Only fetch data if authorized
+    const isAuthorized = profile?.role === 'admin' || isMasterAuthenticated;
+    if (authLoading || !isAuthorized) return;
 
     // Stats & Orders Listener (Real-time) - Optimized with limit and order
     const ordersQuery = query(
       collection(db, "orders"), 
       orderBy("createdAt", "desc"), 
-      limit(50)
+      limit(100) // Increased limit for better stats
     );
     
     const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
       let revenue = 0;
       const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
       
-      // Calculate revenue from all orders (might need a better way for huge datasets, but 50 is fine for now)
-      // Ideally, revenue should be a separate stat in a metadata doc
       orders.forEach((order: any) => {
         revenue += Number(order.total) || 0;
       });
@@ -85,7 +108,7 @@ export default function AdminDashboard() {
       setAllOrders(orders);
     }, (error) => {
       console.error("Orders listener error:", error);
-      toast.error("Failed to sync orders");
+      toast.error("Failed to sync orders. Check permissions.");
     });
 
     // Users Listener - Optimized
@@ -117,16 +140,16 @@ export default function AdminDashboard() {
       unsubVendors();
       unsubReviews();
     };
-  }, [authLoading, user, profile]);
+  }, [authLoading, user, profile, isMasterAuthenticated]);
 
   const handleSettleDues = async (vendorId: string, amount: number) => {
     try {
       const { settleVendorPayout } = await import("@/lib/firestore");
       await settleVendorPayout(vendorId, amount);
-      alert("Payout settled successfully!");
+      toast.success("Payout settled successfully!");
     } catch (error) {
       console.error("Payout settlement failed:", error);
-      alert("Failed to settle payout.");
+      toast.error("Failed to settle payout.");
     }
   };
 
@@ -134,10 +157,10 @@ export default function AdminDashboard() {
     try {
       const { updateVendorStatus } = await import("@/lib/firestore");
       await updateVendorStatus(vendorId, "active");
-      alert("Vendor approved successfully!");
+      toast.success("Vendor approved successfully!");
     } catch (error) {
       console.error("Failed to approve vendor:", error);
-      alert("Failed to approve vendor.");
+      toast.error("Failed to approve vendor.");
     }
   };
 
@@ -149,7 +172,50 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!user || profile?.role !== 'admin') return null;
+  // Master Login Screen
+  if (profile?.role !== 'admin' && !isMasterAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-secondary/40 backdrop-blur-xl border border-white/5 p-12 rounded-[40px] shadow-2xl space-y-8"
+        >
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
+              <ShieldCheck className="w-10 h-10" />
+            </div>
+            <h1 className="text-3xl font-bold text-white">Master Admin</h1>
+            <p className="text-xs text-muted font-bold uppercase tracking-widest">Restricted Access Control</p>
+          </div>
+
+          <form onSubmit={handleMasterLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] ml-1">Admin Password</label>
+              <input 
+                type="password" 
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-background border border-white/10 focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all text-white font-bold tracking-widest text-center"
+                autoFocus
+              />
+            </div>
+            <button 
+              disabled={isLoggingIn}
+              className="w-full py-4 bg-primary text-black rounded-2xl font-black uppercase tracking-widest shadow-glow hover:scale-[1.02] transition-all disabled:opacity-50"
+            >
+              {isLoggingIn ? "Verifying..." : "Access Dashboard"}
+            </button>
+          </form>
+
+          <p className="text-[9px] text-center text-muted font-bold uppercase tracking-tighter">
+            Unauthorized access is strictly prohibited and logged.
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
 
   const cards = [
     { title: "Total Revenue", value: `₹${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, trend: "+12.5%", color: "text-emerald-500", bg: "bg-emerald-500/10" },
@@ -157,6 +223,7 @@ export default function AdminDashboard() {
     { title: "Active Vendors", value: stats.activeVendors.toString(), icon: Store, trend: "+3", color: "text-primary", bg: "bg-primary/10" },
     { title: "Total Foodies", value: stats.totalUsers.toString(), icon: Users, trend: "+156", color: "text-purple-500", bg: "bg-purple-500/10" },
   ];
+
 
   return (
     <div className="min-h-screen bg-background pt-36 lg:pt-24 pb-12 px-4 lg:px-6">

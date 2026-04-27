@@ -96,13 +96,27 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
           ))}
         </div>
 
-        <div className="mt-auto p-4 bg-white/5 rounded-3xl border border-white/5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">System Online</span>
+        <div className="mt-auto space-y-4">
+          <button 
+            onClick={() => {
+              sessionStorage.removeItem("master_admin_auth");
+              window.location.href = "/";
+            }}
+            className="w-full flex items-center gap-3 p-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl transition-all group"
+          >
+            <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+            <span className="text-xs font-black uppercase tracking-wider">Logout Admin</span>
+          </button>
+
+          <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">System Online</span>
+            </div>
+            <p className="text-[9px] text-muted font-mono">v1.0.4-production</p>
           </div>
-          <p className="text-[9px] text-muted font-mono">v1.0.4-production</p>
         </div>
+
       </div>
     </>
   );
