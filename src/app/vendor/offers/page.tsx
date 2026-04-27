@@ -89,7 +89,7 @@ export default function VendorOffersPage() {
         active: formData.active ?? true,
       };
 
-      await upsertVendorOffer(user!.uid, offerId, offerToSave);
+      await upsertVendorOffer(user!.uid, offerToSave);
       
       toast.success(editingOffer ? "Offer updated successfully" : "Offer created successfully");
       setShowModal(false);
@@ -115,7 +115,7 @@ export default function VendorOffersPage() {
 
   const toggleActiveStatus = async (offer: OfferData) => {
     try {
-      await upsertVendorOffer(user!.uid, offer.id!, { ...offer, active: !offer.active });
+      await upsertVendorOffer(user!.uid, { ...offer, active: !offer.active });
       toast.success(`Offer ${offer.active ? 'deactivated' : 'activated'}`);
       loadOffers();
     } catch (error) {

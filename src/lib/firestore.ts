@@ -43,10 +43,13 @@ export interface DishData {
 export interface OfferData {
   id?: string;
   code: string;
-  discountPercentage: number;
+  description?: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
   minOrderValue: number;
-  validUntil: string;
-  isActive: boolean;
+  maxDiscount?: number;
+  validUntil?: string;
+  active: boolean;
 }
 
 export const db = getFirestore(app);
