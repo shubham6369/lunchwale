@@ -22,7 +22,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   
   const [isCheckingOut, setIsCheckingOut] = React.useState(false);
   const [address, setAddress] = React.useState("");
-  const [paymentMethod, setPaymentMethod] = React.useState<"online" | "cod">("online");
+  const [paymentMethod, setPaymentMethod] = React.useState<"online" | "cod">("cod");
   const [isPlacing, setIsPlacing] = React.useState(false);
 
   const handleCheckout = async () => {
