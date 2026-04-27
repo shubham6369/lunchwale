@@ -355,7 +355,7 @@ export default function VendorOffersPage() {
                       type="date"
                       value={formData.validUntil || ''}
                       onChange={e => setFormData({...formData, validUntil: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary [color-scheme:dark]"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary scheme-dark"
                     />
                   </div>
                   

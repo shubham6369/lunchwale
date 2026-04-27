@@ -95,7 +95,7 @@ export default function VendorProfilePage() {
         {form.image && (
           <img src={form.image} alt="preview" className="w-full h-full object-cover opacity-50" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent flex items-center gap-5 p-6">
+        <div className="absolute inset-0 bg-linear-to-r from-black/80 to-transparent flex items-center gap-5 p-6">
           <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-black text-2xl overflow-hidden">
             {form.image ? <img src={form.image} alt="" className="w-full h-full object-cover" /> : (form.name[0] || "K")}
           </div>

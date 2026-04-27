@@ -146,7 +146,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100]"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-100"
           />
 
           {/* Dialog */}
@@ -154,7 +154,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#111] z-[110] rounded-[40px] border border-white/8 shadow-2xl overflow-hidden"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#111] z-110 rounded-[40px] border border-white/8 shadow-2xl overflow-hidden"
           >
             <div id="recaptcha-container" />
 
