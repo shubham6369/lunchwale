@@ -48,33 +48,89 @@ export default function HomePage() {
   const { cartCount } = useCart();
   const { user } = useAuth();
 
-  // Fetch vendors
+  // Fetch vendors and dishes in real-time
   useEffect(() => {
-    (async () => {
-      const data = await getVendors("active");
+    // 1. Listen to active vendors
+    const vendorsQuery = query(
+      collection(db, "vendors"),
+      where("status", "==", "active"),
+      orderBy("createdAt", "desc"),
+      limit(50)
+    );
+
+    const unsubVendors = onSnapshot(vendorsQuery, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setVendors(data);
       setFilteredVendors(data);
       setLoadingVendors(false);
-    })();
-  }, []);
+    }, (error) => {
+      console.error("Vendors listener error:", error);
+      setLoadingVendors(false);
+    });
 
-  // Fetch all dishes (across all vendors)
-  useEffect(() => {
-    (async () => {
-      const data = await getAllDishes(80);
-      // Attach vendor names from vendors list if available
-      setDishes(data as any[]);
-      setFilteredDishes(data as any[]);
-      setLoadingDishes(false);
-    })();
+    // 2. Listen to all dishes (using collectionGroup)
+    let unsubDishes = () => {};
+    import("firebase/firestore").then(({ collectionGroup }) => {
+      const dishesGroup = collectionGroup(db, "dishes");
+      const dishesQuery = query(
+        dishesGroup,
+        where("isAvailable", "==", true),
+        limit(80)
+      );
+
+      unsubDishes = onSnapshot(dishesQuery, (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          vendorId: doc.ref.parent.parent?.id || "",
+          ...doc.data()
+        }));
+        setDishes(data);
+        setFilteredDishes(data);
+        setLoadingDishes(false);
+      }, (error) => {
+        console.error("Dishes listener error:", error);
+        setLoadingDishes(false);
+      });
+    });
+
+    return () => {
+      unsubVendors();
+      unsubDishes();
+    };
   }, []);
 
   // Enrich dishes with vendor names once both are loaded
   useEffect(() => {
     if (!vendors.length || !dishes.length) return;
     const vendorMap = Object.fromEntries(vendors.map(v => [v.id, v.name]));
-    setDishes(prev => prev.map(d => ({ ...d, vendorName: vendorMap[d.vendorId] || d.vendorName })));
-  }, [vendors, dishes.length]);
+    // Instead of directly mutating the array inside setDishes with the same data,
+    // we only update if there's a missing vendorName to avoid infinite loops
+    let updated = false;
+    const enrichedDishes = dishes.map(d => {
+      if (d.vendorName !== vendorMap[d.vendorId] && vendorMap[d.vendorId]) {
+        updated = true;
+        return { ...d, vendorName: vendorMap[d.vendorId] };
+      }
+      return d;
+    });
+
+    if (updated) {
+      setDishes(enrichedDishes);
+      // Re-apply current filters
+      let result = enrichedDishes;
+      if (dishFilter === "Veg") result = result.filter((d: any) => d.isVeg === true);
+      if (dishFilter === "Non-Veg") result = result.filter((d: any) => d.isVeg === false);
+      if (dishSearch) {
+        const q = dishSearch.toLowerCase();
+        result = result.filter((d: any) =>
+          d.name?.toLowerCase().includes(q) ||
+          d.category?.toLowerCase().includes(q) ||
+          d.vendorName?.toLowerCase().includes(q)
+        );
+      }
+      setFilteredDishes(result);
+    }
+  }, [vendors, dishes, dishFilter, dishSearch]);
 
   // Filter vendors
   useEffect(() => {
