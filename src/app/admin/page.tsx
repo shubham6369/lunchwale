@@ -453,7 +453,7 @@ export default function AdminDashboard() {
                         <div className="flex items-start justify-between">
                           <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors">{vendor.name}</h3>
                           <span className={cn(
-                            "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border",
+                            "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
                             vendor.status === 'active' ? "border-emerald-500/20 text-emerald-500 bg-emerald-500/5" : "border-amber-500/20 text-amber-500 bg-amber-500/5"
                           )}>
                             {vendor.status || 'Pending'}

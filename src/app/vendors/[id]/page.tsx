@@ -220,7 +220,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                       <button 
                         disabled={!vendor.isOpen}
                         onClick={() => {
@@ -234,8 +234,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                             vendorName: vendor?.name || 'Vendor',
                             name: dish.name,
                             price: dish.price,
-                            image: dish.image,
-                            quantity: 1
+                            image: dish.image
                           });
                         }}
                         className={cn(
