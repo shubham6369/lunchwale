@@ -235,3 +235,20 @@ export const getUsers = async () => {
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
+// Fetch ALL dishes across all vendors using collectionGroup
+export const getAllDishes = async (limitCount = 50) => {
+  try {
+    const { collectionGroup } = await import("firebase/firestore");
+    const dishesGroup = collectionGroup(db, "dishes");
+    const q = query(dishesGroup, where("isAvailable", "==", true), limit(limitCount));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({ 
+      id: doc.id, 
+      vendorId: doc.ref.parent.parent?.id || "",
+      ...doc.data() 
+    }));
+  } catch (error) {
+    console.error("Error fetching all dishes:", error);
+    return [];
+  }
+};
