@@ -22,6 +22,8 @@ import CartDrawer from "@/components/CartDrawer";
 import LoginDialog from "@/components/LoginDialog";
 import { useState, useEffect } from "react";
 import { getVendors, getAllDishes } from "@/lib/firestore";
+import { collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import VendorCard from "@/components/VendorCard";
 import DishCard from "@/components/DishCard";
 import { VendorCardSkeleton } from "@/components/SkeletonLoader";
