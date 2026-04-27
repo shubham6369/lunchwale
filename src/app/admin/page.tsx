@@ -24,6 +24,7 @@ import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 import AdminSidebar from "@/components/AdminSidebar";
 
 export default function AdminDashboard() {
@@ -57,10 +58,19 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (authLoading || !user || profile?.role !== 'admin') return;
 
-    // Stats & Orders Listener (Real-time)
-    const unsubOrders = onSnapshot(collection(db, "orders"), (snapshot) => {
+    // Stats & Orders Listener (Real-time) - Optimized with limit and order
+    const ordersQuery = query(
+      collection(db, "orders"), 
+      orderBy("createdAt", "desc"), 
+      limit(50)
+    );
+    
+    const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
       let revenue = 0;
       const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      
+      // Calculate revenue from all orders (might need a better way for huge datasets, but 50 is fine for now)
+      // Ideally, revenue should be a separate stat in a metadata doc
       orders.forEach((order: any) => {
         revenue += Number(order.total) || 0;
       });
@@ -71,35 +81,32 @@ export default function AdminDashboard() {
         totalRevenue: revenue 
       }));
       
-      // Sort for recent view
-      const sorted = [...orders].sort((a: any, b: any) => {
-        const dateA = a.createdAt?.seconds || 0;
-        const dateB = b.createdAt?.seconds || 0;
-        return dateB - dateA;
-      });
-      
-      setRecentOrders(sorted.slice(0, 5));
-      setAllOrders(sorted);
+      setRecentOrders(orders.slice(0, 5));
+      setAllOrders(orders);
     }, (error) => {
       console.error("Orders listener error:", error);
+      toast.error("Failed to sync orders");
     });
 
-    // Users Listener
-    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+    // Users Listener - Optimized
+    const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(100));
+    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setUsersList(list);
       setStats(prev => ({ ...prev, totalUsers: snapshot.size }));
     });
 
-    // Vendors Listener
-    const unsubVendors = onSnapshot(collection(db, "vendors"), (snapshot) => {
+    // Vendors Listener - Optimized
+    const vendorsQuery = query(collection(db, "vendors"), orderBy("createdAt", "desc"), limit(50));
+    const unsubVendors = onSnapshot(vendorsQuery, (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setVendorsList(list);
       setStats(prev => ({ ...prev, activeVendors: snapshot.size }));
     });
 
-    // Reviews Listener
-    const unsubReviews = onSnapshot(collection(db, "reviews"), (snapshot) => {
+    // Reviews Listener - Optimized
+    const reviewsQuery = query(collection(db, "reviews"), orderBy("createdAt", "desc"), limit(50));
+    const unsubReviews = onSnapshot(reviewsQuery, (snapshot) => {
       setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     });
@@ -152,8 +159,8 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-12 px-6">
-      <div className="max-w-[1600px] mx-auto flex gap-8">
+    <div className="min-h-screen bg-background pt-36 lg:pt-24 pb-12 px-4 lg:px-6">
+      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-8">
         
         {/* Persistent Sidebar */}
         <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />

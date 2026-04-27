@@ -13,7 +13,8 @@ import {
   serverTimestamp,
   increment,
   runTransaction,
-  deleteDoc
+  deleteDoc,
+  limit
 } from "firebase/firestore";
 import { app } from "./firebase";
 
@@ -116,7 +117,8 @@ export const getVendorReviews = async (vendorId: string) => {
   const q = query(
     reviewsRef,
     where("vendorId", "==", vendorId),
-    orderBy("createdAt", "desc")
+    orderBy("createdAt", "desc"),
+    limit(50)
   );
   const snap = await getDocs(q);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -128,9 +130,18 @@ export const getVendors = async (status?: "active" | "pending" | "rejected") => 
     const vendorsRef = collection(db, "vendors");
     let q;
     if (status) {
-      q = query(vendorsRef, where("status", "==", status), orderBy("createdAt", "desc"));
+      q = query(
+        vendorsRef, 
+        where("status", "==", status), 
+        orderBy("createdAt", "desc"),
+        limit(50)
+      );
     } else {
-      q = query(vendorsRef, orderBy("createdAt", "desc"));
+      q = query(
+        vendorsRef, 
+        orderBy("createdAt", "desc"),
+        limit(100)
+      );
     }
     const snap = await getDocs(q);
     
@@ -219,7 +230,8 @@ export const deleteReview = async (reviewId: string) => {
 
 export const getUsers = async () => {
   const usersRef = collection(db, "users");
-  const snap = await getDocs(usersRef);
+  const q = query(usersRef, orderBy("createdAt", "desc"), limit(100));
+  const snap = await getDocs(q);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 

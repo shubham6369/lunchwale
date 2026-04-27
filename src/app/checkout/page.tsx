@@ -23,7 +23,7 @@ import Link from "next/link";
 
 export default function CheckoutPage() {
   const { items, cartTotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
   
   const [step, setStep] = useState(1); // 1: Cart, 2: Address, 3: Payment
@@ -58,7 +58,7 @@ export default function CheckoutPage() {
         platformFee,
         status: "pending",
         paymentStatus: "paid",
-        address: "Home - HSR Layout, Bangalore", // Mock address
+        address: profile?.address || "Home - Default Address",
         paymentMethod: "UPI",
       };
 
@@ -173,17 +173,35 @@ export default function CheckoutPage() {
                           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                             <MapPin className="w-5 h-5 text-primary" />
                           </div>
-                          <div>
-                            <h4 className="font-bold text-lg mb-1">Home</h4>
-                            <p className="text-sm text-muted">No. 42, Green Garden Residency, HSR Layout Sector 2, Bangalore, Karnataka - 560102</p>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-bold text-lg">Saved Address</h4>
+                              <Link 
+                                href="/profile" 
+                                className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline underline-offset-4"
+                              >
+                                Change
+                              </Link>
+                            </div>
+                            <p className="text-sm text-muted leading-relaxed">
+                              {profile?.address || (
+                                <span className="text-red-400">Please add an address in your profile settings.</span>
+                              )}
+                            </p>
                           </div>
                         </div>
                       </div>
                       <button 
+                        disabled={!profile?.address}
                         onClick={() => setStep(3)}
-                        className="w-full py-4 bg-primary text-black font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-glow"
+                        className={cn(
+                          "w-full py-4 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-glow",
+                          profile?.address 
+                            ? "bg-primary text-black hover:scale-[1.02]" 
+                            : "bg-white/5 border border-white/10 text-muted cursor-not-allowed"
+                        )}
                       >
-                        Proceed to Payment
+                        {profile?.address ? "Proceed to Payment" : "Add Address to Continue"}
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
@@ -279,7 +297,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Delivering to</p>
-                    <p className="text-sm font-bold truncate">Home - HSR Layout Sector 2</p>
+                    <p className="text-sm font-bold truncate">{profile?.address || "No address saved"}</p>
                     <p className="text-[10px] text-muted mt-0.5">ESTIMATED DELIVERY: 25 MINS</p>
                   </div>
                 </div>

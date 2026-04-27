@@ -17,6 +17,7 @@ interface UserProfile {
   phoneNumber: string | null;
   role: "customer" | "vendor" | "admin";
   displayName?: string;
+  address?: string;
 }
 
 interface AuthContextType {

@@ -18,7 +18,8 @@ import {
   query, 
   where, 
   onSnapshot, 
-  orderBy 
+  orderBy,
+  limit 
 } from "firebase/firestore";
 
 export default function OrdersPage() {
@@ -33,7 +34,8 @@ export default function OrdersPage() {
     const q = query(
       ordersRef, 
       where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
+      limit(50)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -50,10 +52,11 @@ export default function OrdersPage() {
 
   const statusMap: any = {
     pending: { label: "Order Placed", color: "text-amber-400 bg-amber-400/10" },
-    confirmed: { label: "Confirmed", color: "text-blue-400 bg-blue-400/10" },
-    cooking: { label: "Preparing your meal", color: "text-purple-400 bg-purple-400/10" },
+    accepted: { label: "Accepted by Kitchen", color: "text-blue-400 bg-blue-400/10" },
+    preparing: { label: "Preparing your meal", color: "text-purple-400 bg-purple-400/10" },
     out_for_delivery: { label: "Out for Delivery", color: "text-indigo-400 bg-indigo-400/10" },
     delivered: { label: "Delivered", color: "text-emerald-400 bg-emerald-400/10" },
+    rejected: { label: "Rejected", color: "text-red-400 bg-red-400/10" },
   };
 
   if (loading) {
@@ -133,8 +136,8 @@ export default function OrdersPage() {
                            initial={{ width: 0 }}
                            animate={{ 
                              width: order.status === "pending" ? "20%" : 
-                                    order.status === "confirmed" ? "40%" :
-                                    order.status === "cooking" ? "70%" : "90%" 
+                                    order.status === "accepted" ? "40%" :
+                                    order.status === "preparing" ? "70%" : "90%" 
                            }}
                            className="h-full bg-primary shadow-glow shadow-primary/50"
                          />

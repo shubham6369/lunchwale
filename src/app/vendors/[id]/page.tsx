@@ -18,8 +18,10 @@ import {
   MessageCircle,
   Utensils,
   XCircle,
-  ArrowRight
+  ArrowRight,
+  ChefHat
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -221,23 +223,29 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <button 
                         disabled={!vendor.isOpen}
-                        onClick={() => addToCart({
-                          id: dish.id,
-                          vendorId: params.id,
-                          vendorName: vendor?.name || 'Vendor',
-                          name: dish.name,
-                          price: dish.price,
-                          image: dish.image,
-                          quantity: 1
-                        })}
+                        onClick={() => {
+                          if (!vendor.isOpen) {
+                            toast.error("Kitchen is currently offline and not accepting orders.");
+                            return;
+                          }
+                          addToCart({
+                            id: dish.id,
+                            vendorId: params.id,
+                            vendorName: vendor?.name || 'Vendor',
+                            name: dish.name,
+                            price: dish.price,
+                            image: dish.image,
+                            quantity: 1
+                          });
+                        }}
                         className={cn(
                           "absolute bottom-2 left-1/2 -translate-x-1/2 w-24 py-1 rounded shadow-lg transition-all font-bold flex items-center justify-center gap-2",
                           vendor.isOpen 
                             ? "bg-dark-surface border border-dark-border text-orange-500 hover:bg-orange-500 hover:text-white hover:border-orange-500" 
-                            : "bg-white/5 border-white/5 text-muted cursor-not-allowed"
+                            : "bg-white/5 border-white/5 text-muted cursor-not-allowed grayscale"
                         )}
                       >
-                        {vendor.isOpen ? <Plus className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                        {vendor.isOpen ? <Plus className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                         {vendor.isOpen ? "ADD" : "OFFLINE"}
                       </button>
                     </div>
@@ -342,6 +350,22 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+
+      {/* Offline Banner */}
+      {!vendor.isOpen && (
+        <motion.div 
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          className="fixed bottom-0 left-0 right-0 bg-red-500 text-white py-4 px-6 z-50 flex items-center justify-center gap-4 shadow-[0_-10px_40px_rgba(239,68,68,0.3)]"
+        >
+          <div className="bg-white/20 p-2 rounded-full animate-pulse">
+            <Clock className="w-5 h-5" />
+          </div>
+          <p className="font-black uppercase tracking-widest text-sm text-center">
+            This kitchen is currently offline. You can browse the menu but cannot place orders.
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 }
