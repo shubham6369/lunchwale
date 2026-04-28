@@ -74,29 +74,13 @@ export default function Navbar() {
               )}
             </button>
             
-            {/* Vendor Portal Entry */}
-            {!user ? (
-              <div className="hidden xl:flex items-center gap-2">
-                <Link 
-                  href="/vendor/onboarding" 
-                  className="flex items-center gap-2 px-4 py-2 border border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10 rounded-full text-[10px] font-black uppercase tracking-widest text-orange-400 transition-all"
-                >
-                  <ChefHat className="w-3.5 h-3.5" /> Register Vendor
-                </Link>
-                <button 
-                  onClick={() => setIsLoginOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 border border-white/10 bg-white/5 hover:bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-muted hover:text-white transition-all"
-                >
-                  Vendor Login
-                </button>
-              </div>
-            ) : profile?.role !== 'vendor' && profile?.role !== 'admin' && (
-              <Link 
-                href="/vendor/onboarding" 
-                className="hidden xl:flex items-center gap-2 px-4 py-2 border border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10 rounded-full text-[10px] font-black uppercase tracking-widest text-orange-400 transition-all"
+            {!user && (
+              <button 
+                onClick={() => setIsLoginOpen(true)}
+                className="hidden xl:flex items-center gap-2 px-4 py-2 border border-white/10 bg-white/5 hover:bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-muted hover:text-white transition-all"
               >
-                <ChefHat className="w-3.5 h-3.5" /> Become a Partner
-              </Link>
+                Vendor Login
+              </button>
             )}
 
             {/* User Profile / Login */}

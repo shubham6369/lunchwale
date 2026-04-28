@@ -50,14 +50,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* FOR RESTAURANTS */}
-          <div>
-            <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">For Restaurants</h4>
-            <ul className="space-y-3 text-[13px] text-gray-400 font-medium">
-              <li><Link href="#" className="hover:text-white transition-colors">Partner With Us</Link></li>
-            </ul>
-          </div>
-
           {/* LEARN MORE */}
           <div>
             <h4 className="text-[13px] font-bold tracking-widest mb-5 uppercase">Learn More</h4>
