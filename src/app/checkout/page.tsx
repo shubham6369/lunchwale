@@ -45,31 +45,96 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     try {
-      const newOrder = {
-        userId: user.uid,
-        userName: user.displayName || "Customer",
-        vendorId: items[0].vendorId,
-        vendorName: items[0].vendorName,
-        items: items,
-        total: totalAmount,
-        subtotal: cartTotal,
-        tax: gst,
-        deliveryFee,
-        platformFee,
-        status: "pending",
-        paymentStatus: "paid",
-        address: profile?.address || "Home - Default Address",
-        paymentMethod: "UPI",
+      // 1. Create Razorpay Order via API
+      const res = await fetch("/api/razorpay/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: totalAmount }),
+      });
+      
+      const razorpayOrder = await res.json();
+      
+      if (!razorpayOrder.id) {
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      // 2. Configure Razorpay Options
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder", 
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "LunchNow",
+        description: "Premium Meal Order",
+        order_id: razorpayOrder.id,
+        handler: async function (response: any) {
+          try {
+            // 3. Verify payment on server
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: razorpayOrder.id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            
+            const verifyData = await verifyRes.json();
+            
+            if (verifyData.status !== "ok") {
+              throw new Error("Payment verification failed");
+            }
+
+            // 4. Finalize order in Firestore
+            const newOrder = {
+              userId: user.uid,
+              userName: user.displayName || "Customer",
+              vendorId: items[0].vendorId,
+              vendorName: items[0].vendorName,
+              items: items,
+              total: totalAmount,
+              subtotal: cartTotal,
+              tax: gst,
+              deliveryFee,
+              platformFee,
+              status: "pending",
+              paymentStatus: "paid",
+              razorpayOrderId: razorpayOrder.id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              address: profile?.address || "Home - Default Address",
+              paymentMethod: "UPI",
+            };
+
+            const id = await createOrder(newOrder);
+            setOrderId(id);
+            clearCart();
+            router.push(`/checkout/success?orderId=${id}`);
+          } catch (err) {
+            console.error("Verification/Creation failed:", err);
+            alert("Payment verified but order creation failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: user.displayName || "",
+          email: user.email || "",
+          contact: profile?.phone || "",
+        },
+        theme: {
+          color: "#EAB308",
+        },
+        modal: {
+          ondismiss: function() {
+            setIsProcessing(false);
+          }
+        }
       };
 
-      const id = await createOrder(newOrder);
-      setOrderId(id);
-      setOrderComplete(true);
-      clearCart();
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (error) {
       console.error("Order failed:", error);
       alert("Something went wrong while placing your order.");
-    } finally {
       setIsProcessing(false);
     }
   };

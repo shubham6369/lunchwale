@@ -16,10 +16,14 @@ import {
   ChevronRight,
   Filter,
   CheckCircle2,
-  Clock
+  Clock,
+  UtensilsCrossed,
+  MapPin as MapPinIcon,
+  ToggleLeft,
+  ToggleRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit, collectionGroup } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -47,9 +51,11 @@ export default function AdminDashboard() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [vendorsList, setVendorsList] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [dishesList, setDishesList] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [hasPermissionError, setHasPermissionError] = useState(false);
 
   // Check for master auth on mount
   useEffect(() => {
@@ -109,7 +115,9 @@ export default function AdminDashboard() {
       setAllOrders(orders);
     }, (error) => {
       console.error("Orders listener error:", error);
+      setHasPermissionError(true);
       toast.error("Failed to sync orders. Check permissions.");
+      setLoading(false);
     });
 
     // Users Listener - Optimized
@@ -118,6 +126,9 @@ export default function AdminDashboard() {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setUsersList(list);
       setStats(prev => ({ ...prev, totalUsers: snapshot.size }));
+    }, (error) => {
+      console.error("Users listener error:", error);
+      setLoading(false);
     });
 
     // Vendors Listener - Optimized
@@ -126,12 +137,34 @@ export default function AdminDashboard() {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setVendorsList(list);
       setStats(prev => ({ ...prev, activeVendors: snapshot.size }));
+    }, (error) => {
+      console.error("Vendors listener error:", error);
+      setHasPermissionError(true);
+      setLoading(false);
     });
 
     // Reviews Listener - Optimized
     const reviewsQuery = query(collection(db, "reviews"), orderBy("createdAt", "desc"), limit(50));
     const unsubReviews = onSnapshot(reviewsQuery, (snapshot) => {
       setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      console.error("Reviews listener error:", error);
+      setLoading(false);
+    });
+
+    // Global Dishes Listener (Collection Group)
+    const dishesQuery = query(collectionGroup(db, "dishes"), limit(200));
+    const unsubDishes = onSnapshot(dishesQuery, (snapshot) => {
+      setDishesList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    }, (error) => {
+      console.error("Dishes listener error:", error);
+      if (error.code === 'permission-denied') {
+        toast.error("Permission denied for Dishes. Please update Firestore rules.");
+      } else if (error.message.includes("index")) {
+        console.error("Index required:", error.message);
+        toast.error("Firestore Index Required. Check console for link.");
+      }
       setLoading(false);
     });
 
@@ -140,6 +173,7 @@ export default function AdminDashboard() {
       unsubUsers();
       unsubVendors();
       unsubReviews();
+      unsubDishes();
     };
   }, [authLoading, user, profile, isMasterAuthenticated]);
 
@@ -203,6 +237,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteDish = async (vendorId: string, dishId: string) => {
+    if (!confirm("Are you sure you want to delete this dish?")) return;
+    try {
+      const { deleteDoc, doc } = await import("firebase/firestore");
+      await deleteDoc(doc(db, "vendors", vendorId, "dishes", dishId));
+      toast.success("Dish deleted");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Delete failed");
+    }
+  };
+
+  const handleToggleDishAvailability = async (vendorId: string, dishId: string, currentStatus: boolean) => {
+    try {
+      const { updateDoc, doc } = await import("firebase/firestore");
+      await updateDoc(doc(db, "vendors", vendorId, "dishes", dishId), {
+        isAvailable: !currentStatus
+      });
+      toast.success(`Dish is now ${!currentStatus ? 'available' : 'unavailable'}`);
+    } catch (error) {
+      console.error("Update failed:", error);
+      toast.error("Update failed");
+    }
+  };
+
   const filteredUsers = usersList.filter(u => 
     u.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.phoneNumber?.includes(searchTerm) ||
@@ -229,6 +288,12 @@ export default function AdminDashboard() {
   const filteredPayouts = vendorsList.filter(v => 
     v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (v.pendingBalance && v.pendingBalance > 0)
+  );
+
+  const filteredDishes = dishesList.filter(d => 
+    d.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    d.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.vendorName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (authLoading) {
@@ -293,8 +358,18 @@ export default function AdminDashboard() {
 
 
   return (
-    <div className="min-h-screen bg-background pt-36 lg:pt-24 pb-12 px-4 lg:px-6">
-      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-8">
+    <div className="min-h-screen bg-background pb-12 px-4 lg:px-6">
+      <div className="relative z-30 max-w-[1600px] mx-auto px-4 lg:px-8 pt-36 lg:pt-24 pb-20">
+        {hasPermissionError && (
+          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-4 text-red-500">
+            <ShieldCheck className="w-6 h-6 shrink-0" />
+            <div className="text-sm">
+              <p className="font-bold">Firestore Permission Denied</p>
+              <p className="opacity-80">Some data could not be loaded. Please update your Firestore Security Rules in the Firebase Console.</p>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col lg:flex-row gap-8">
         
         {/* Persistent Sidebar */}
         <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -736,6 +811,86 @@ export default function AdminDashboard() {
               </motion.div>
             )}
 
+            {activeTab === "dishes" && (
+              <motion.div 
+                key="dishes"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-white">Global Dish Inventory</h2>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                    <input 
+                      type="text" 
+                      placeholder="Search dishes or categories..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-12 pr-6 py-3 bg-secondary/40 border border-white/5 rounded-2xl outline-none focus:border-primary/50 transition-all text-xs w-64 text-white"
+                    />
+                  </div>
+                </div>
+                <div className="bg-secondary/20 border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-muted">
+                        <th className="px-8 py-6">Dish</th>
+                        <th className="px-8 py-6">Category</th>
+                        <th className="px-8 py-6">Price</th>
+                        <th className="px-8 py-6">Status</th>
+                        <th className="px-8 py-6 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {filteredDishes.map((dish) => (
+                        <tr key={dish.id} className="group hover:bg-white/5 transition-colors">
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                              <img src={dish.image} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                              <div>
+                                <p className="text-sm font-bold text-white">{dish.name}</p>
+                                <p className="text-[9px] text-muted font-black uppercase tracking-widest">{vendorsList.find(v => v.id === dish.vendorId)?.name || "Unknown Kitchen"}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6">
+                            <span className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-black uppercase tracking-widest text-muted border border-white/5">
+                              {dish.category}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 font-black text-white">₹{dish.price}</td>
+                          <td className="px-8 py-6">
+                            <button 
+                              onClick={() => handleToggleDishAvailability(dish.vendorId, dish.id, dish.isAvailable)}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                                dish.isAvailable 
+                                  ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
+                                  : "bg-red-500/10 text-red-500 border border-red-500/20"
+                              )}
+                            >
+                              {dish.isAvailable ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+                              {dish.isAvailable ? "Available" : "Sold Out"}
+                            </button>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <button 
+                              onClick={() => handleDeleteDish(dish.vendorId, dish.id)}
+                              className="p-3 hover:bg-red-500/10 rounded-2xl transition-all text-red-500"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+
             {activeTab === "reviews" && (
               <motion.div 
                 key="reviews"
@@ -797,25 +952,6 @@ export default function AdminDashboard() {
         </div>
       </div>
     </div>
-  );
-}
-
-function MapPinIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  )
+  </div>
+);
 }

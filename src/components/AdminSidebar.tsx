@@ -10,7 +10,8 @@ import {
   Star,
   Settings,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  UtensilsCrossed
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -25,6 +26,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "users", label: "User Management", icon: Users },
     { id: "vendors", label: "Kitchen Partners", icon: Store },
+    { id: "dishes", label: "Global Dishes", icon: UtensilsCrossed },
     { id: "orders", label: "Order History", icon: ShoppingBag },
     { id: "payouts", label: "Vendor Payouts", icon: CreditCard },
     { id: "reviews", label: "Reviews & Ratings", icon: Star },
@@ -88,7 +90,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
               {activeTab === item.id && (
                 <motion.div 
                   layoutId="active-pill"
-                  className="absolute inset-0 bg-primary"
+                  className="absolute inset-0 bg-primary pointer-events-none"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
