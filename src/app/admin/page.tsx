@@ -290,11 +290,15 @@ export default function AdminDashboard() {
     (v.pendingBalance && v.pendingBalance > 0)
   );
 
-  const filteredDishes = dishesList.filter(d => 
-    d.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    d.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.vendorName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDishes = dishesList.filter(d => {
+    const vendor = vendorsList.find(v => v.id === d.vendorId);
+    const vendorName = vendor?.name || "Unknown Kitchen";
+    return (
+      d.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      d.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vendorName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   if (authLoading) {
     return (

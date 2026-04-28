@@ -420,7 +420,7 @@ export default function HomePage() {
                     className={cn(
                       "px-6 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border whitespace-nowrap active:scale-95",
                       dishFilter === f
-                        ? "bg-gradient-to-r from-primary to-orange-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(249,115,22,0.4)]"
+                        ? "bg-linear-to-r from-primary to-orange-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(249,115,22,0.4)]"
                         : "bg-white/5 text-muted border-white/5 hover:bg-white/10 hover:border-white/10"
                     )}
                   >
@@ -440,7 +440,7 @@ export default function HomePage() {
                     className={cn(
                       "px-6 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border whitespace-nowrap active:scale-95",
                       priceFilter === f
-                        ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(16,185,129,0.4)]"
+                        ? "bg-linear-to-r from-emerald-500 to-teal-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(16,185,129,0.4)]"
                         : "bg-white/5 text-muted border-white/5 hover:bg-white/10 hover:border-white/10"
                     )}
                   >

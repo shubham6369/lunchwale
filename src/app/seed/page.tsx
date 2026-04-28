@@ -4,10 +4,33 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/firestore";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-hot-toast";
+import { ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function SeedPage() {
   const [status, setStatus] = useState("Idle");
+  const [isMasterAuthenticated, setIsMasterAuthenticated] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Check for master auth on mount
+  useEffect(() => {
+    const isAuth = sessionStorage.getItem("master_admin_auth") === "true";
+    if (isAuth) setIsMasterAuthenticated(true);
+  }, []);
+
+  const handleMasterLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    if (adminPassword === "admin123") {
+      sessionStorage.setItem("master_admin_auth", "true");
+      setIsMasterAuthenticated(true);
+      toast.success("Master Admin Authenticated");
+    } else {
+      toast.error("Invalid Admin Credentials");
+    }
+    setIsLoggingIn(false);
+  };
 
   const seed = async () => {
     setStatus("Seeding...");
@@ -154,6 +177,46 @@ export default function SeedPage() {
       toast.error(errorMessage);
     }
   };
+
+  if (!isMasterAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-secondary/40 backdrop-blur-xl border border-white/5 p-12 rounded-[40px] shadow-2xl space-y-8"
+        >
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
+              <ShieldCheck className="w-10 h-10" />
+            </div>
+            <h1 className="text-3xl font-bold text-white">Seed Access</h1>
+            <p className="text-xs text-muted font-bold uppercase tracking-widest">Master Admin Required</p>
+          </div>
+
+          <form onSubmit={handleMasterLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em] ml-1">Admin Password</label>
+              <input 
+                type="password" 
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-background border border-white/10 focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all text-white font-bold tracking-widest text-center"
+                autoFocus
+              />
+            </div>
+            <button 
+              disabled={isLoggingIn}
+              className="w-full py-4 bg-primary text-black rounded-2xl font-black uppercase tracking-widest shadow-glow hover:scale-[1.02] transition-all disabled:opacity-50"
+            >
+              {isLoggingIn ? "Verifying..." : "Authorize Seeding"}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-20 text-center bg-background min-h-screen text-white">

@@ -35,7 +35,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
   return (
     <>
       {/* Mobile Navigation - Horizontal Scrollable */}
-      <div className="lg:hidden fixed top-20 left-0 right-0 z-50 px-4 py-3 bg-background/80 backdrop-blur-2xl border-b border-white/5">
+      <div className="lg:hidden fixed top-20 left-0 right-0 z-[60] px-4 py-3 bg-background/80 backdrop-blur-2xl border-b border-white/5">
         <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
           {menuItems.map((item) => (
             <button
