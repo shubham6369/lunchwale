@@ -18,6 +18,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface LoginDialogProps {
@@ -50,7 +51,8 @@ const GoogleIcon = () => (
 );
 
 export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, profile } = useAuth();
+  const router = useRouter();
 
   const [step, setStep] = useState<Step>("choose");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -80,7 +82,18 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
     try {
       await signInWithGoogle();
       setStep("success");
-      setTimeout(onClose, 1800);
+      
+      // Handle redirection after a short delay
+      setTimeout(() => {
+        onClose();
+        // Use a small delay to ensure profile has synced if it was just created/updated
+        const role = profile?.role;
+        if (role === 'vendor') {
+          router.push('/vendor');
+        } else if (role === 'admin') {
+          router.push('/admin');
+        }
+      }, 1800);
     } catch (err: any) {
       console.error(err);
       setError(err.code === "auth/popup-closed-by-user" 
@@ -128,7 +141,16 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
     try {
       await confirmationResult.confirm(otp);
       setStep("success");
-      setTimeout(onClose, 2000);
+      
+      setTimeout(() => {
+        onClose();
+        const role = profile?.role;
+        if (role === 'vendor') {
+          router.push('/vendor');
+        } else if (role === 'admin') {
+          router.push('/admin');
+        }
+      }, 2000);
     } catch (err: any) {
       setError("Invalid OTP code. Please check and try again.");
     } finally {

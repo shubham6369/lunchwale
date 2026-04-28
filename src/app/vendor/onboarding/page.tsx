@@ -22,10 +22,16 @@ export default function VendorOnboarding() {
   });
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/");
+    if (!authLoading) {
+      if (!user) {
+        router.push("/");
+      } else if (profile?.role === "vendor") {
+        router.push("/vendor");
+      } else if (profile?.role === "admin") {
+        router.push("/admin");
+      }
     }
-  }, [user, authLoading, router]);
+  }, [user, profile, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +80,7 @@ export default function VendorOnboarding() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 bg-linear-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
             Partner with LunchNow
           </h1>
           <p className="text-gray-400 text-lg">
@@ -144,7 +150,7 @@ export default function VendorOnboarding() {
 
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
                   <Clock size={16} /> Opening Time
                 </label>
                 <input
@@ -156,7 +162,7 @@ export default function VendorOnboarding() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
                   <Clock size={16} /> Closing Time
                 </label>
                 <input

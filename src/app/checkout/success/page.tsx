@@ -152,7 +152,7 @@ export default function PaymentSuccessPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="mt-20 p-8 border border-white/5 rounded-[40px] bg-gradient-to-br from-white/[0.02] to-transparent"
+          className="mt-20 p-8 border border-white/5 rounded-[40px] bg-linear-to-br from-white/2 to-transparent"
         >
           <div className="flex flex-col md:flex-row items-center gap-6 text-left">
             <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center shrink-0">

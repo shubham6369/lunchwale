@@ -469,7 +469,7 @@ export default function HomePage() {
       {latestActivity && (
         <div className="fixed bottom-24 left-6 z-50 animate-slide-up">
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-2xl flex items-center gap-4 max-w-sm group hover:scale-105 transition-all duration-300">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-xl shadow-lg shadow-orange-500/20">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-orange-500 to-red-600 flex items-center justify-center text-xl shadow-lg shadow-orange-500/20">
               🔥
             </div>
             <div className="flex-1">
