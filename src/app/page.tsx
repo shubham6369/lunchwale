@@ -76,17 +76,16 @@ export default function HomePage() {
       const dishesGroup = collectionGroup(db, "dishes");
       const dishesQuery = query(
         dishesGroup,
-        limit(100) // limit slightly higher since we filter on client
+        where("isAvailable", "==", true),
+        limit(100)
       );
 
       unsubDishes = onSnapshot(dishesQuery, (snapshot) => {
-        const data = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            vendorId: doc.ref.parent.parent?.id || "",
-            ...doc.data()
-          }))
-          .filter((d: any) => d.isAvailable !== false); // Filter out unavailable dishes on the client
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          vendorId: doc.ref.parent.parent?.id || "",
+          ...doc.data()
+        }));
           
         setDishes(data);
         setFilteredDishes(data);
