@@ -108,20 +108,35 @@ export default function VendorDashboard() {
       setOrders(ordersData);
       
       // Calculate Stats
-      let revenue = 0;
+      let totalRevenue = 0;
+      let todayRevenue = 0;
+      let todayOrdersCount = 0;
       const active = ordersData.filter((o: any) => o.status !== 'delivered' && o.status !== 'rejected').length;
       
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
       ordersData.forEach((o: any) => {
-        if (o.paymentStatus === 'paid') {
-          revenue += Number(o.total) || 0;
+        const orderAmount = Number(o.total) || 0;
+        const orderTime = o.createdAt?.toDate?.()?.getTime() || 0;
+        
+        if (o.paymentStatus === 'paid' || o.status === 'delivered') {
+          totalRevenue += orderAmount;
+          if (orderTime >= startOfToday) {
+            todayRevenue += orderAmount;
+          }
+        }
+
+        if (orderTime >= startOfToday) {
+          todayOrdersCount++;
         }
       });
 
       setStats({
         activeOrders: active,
-        totalRevenue: revenue,
-        totalCustomers: new Set(ordersData.map((o: any) => o.userId)).size,
-        pendingPayout: revenue * 0.9 // Assuming 10% platform commission
+        totalRevenue: todayRevenue, // Showing Today's Revenue as primary
+        totalCustomers: todayOrdersCount, // Showing Today's Orders as secondary
+        pendingPayout: totalRevenue * 0.9 // Assuming 10% platform commission
       });
       
       // Handle New Order Alerts
@@ -177,9 +192,9 @@ export default function VendorDashboard() {
 
   const statCards = [
     { label: "Active Orders", value: stats.activeOrders.toString(), icon: ShoppingBag, color: "text-blue-400", bg: "bg-blue-400/10" },
-    { label: "Total Revenue", value: `₹${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-400/10" },
-    { label: "Unique Customers", value: stats.totalCustomers.toString(), icon: Users, color: "text-purple-400", bg: "bg-purple-400/10" },
-    { label: "Pending Payout", value: `₹${Math.round(stats.pendingPayout).toLocaleString()}`, icon: Clock, color: "text-amber-400", bg: "bg-amber-400/10" },
+    { label: "Today's Revenue", value: `₹${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+    { label: "Today's Orders", value: stats.totalCustomers.toString(), icon: Users, color: "text-purple-400", bg: "bg-purple-400/10" },
+    { label: "Net Earnings", value: `₹${Math.round(stats.pendingPayout).toLocaleString()}`, icon: Clock, color: "text-amber-400", bg: "bg-amber-400/10" },
   ];
 
   if (loading) {
@@ -195,8 +210,19 @@ export default function VendorDashboard() {
       {/* Header with Store Status */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">Kitchen Dashboard</h1>
-          <p className="text-muted mt-2">Manage your active orders and kitchen availability.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-black text-white tracking-tight">Kitchen Dashboard</h1>
+            {vendorData?.status === "approved" ? (
+              <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest">
+                <CheckCircle2 className="w-3 h-3" /> Verified
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20 text-[10px] font-black uppercase tracking-widest">
+                <Clock4 className="w-3 h-3" /> Pending Review
+              </div>
+            )}
+          </div>
+          <p className="text-muted mt-2 text-wrap">Manage your active orders and kitchen availability.</p>
         </div>
         
         <div className="flex items-center gap-4">

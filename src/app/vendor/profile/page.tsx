@@ -25,6 +25,8 @@ export default function VendorProfilePage() {
     description: "",
     isOpen: true,
     tags: [] as string[],
+    openingTime: "09:00",
+    closingTime: "22:00",
   });
 
   useEffect(() => {
@@ -41,6 +43,8 @@ export default function VendorProfilePage() {
           description: data.description || "",
           isOpen: data.isOpen ?? true,
           tags: data.tags || [],
+          openingTime: data.openingTime || "09:00",
+          closingTime: data.closingTime || "22:00",
         });
       }
       setLoading(false);
@@ -170,7 +174,7 @@ export default function VendorProfilePage() {
 
           {/* Delivery Time */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted uppercase tracking-widest">Delivery Time</label>
+            <label className="text-[10px] font-black text-muted uppercase tracking-widest">Est. Delivery Time</label>
             <div className="relative">
               <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
               <input
@@ -179,6 +183,33 @@ export default function VendorProfilePage() {
                 onChange={e => setForm(f => ({ ...f, deliveryTime: e.target.value }))}
                 placeholder="30-45 min"
                 className="w-full pl-12 pr-4 py-4 bg-secondary border border-white/10 rounded-2xl outline-none focus:border-primary/50 text-white placeholder:text-white/20 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Opening & Closing Times */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-muted uppercase tracking-widest">Opening Time</label>
+            <div className="relative">
+              <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+              <input
+                type="time"
+                value={form.openingTime}
+                onChange={e => setForm(f => ({ ...f, openingTime: e.target.value }))}
+                className="w-full pl-12 pr-4 py-4 bg-secondary border border-white/10 rounded-2xl outline-none focus:border-primary/50 text-white transition-all scheme-dark"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-muted uppercase tracking-widest">Closing Time</label>
+            <div className="relative">
+              <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+              <input
+                type="time"
+                value={form.closingTime}
+                onChange={e => setForm(f => ({ ...f, closingTime: e.target.value }))}
+                className="w-full pl-12 pr-4 py-4 bg-secondary border border-white/10 rounded-2xl outline-none focus:border-primary/50 text-white transition-all scheme-dark"
               />
             </div>
           </div>

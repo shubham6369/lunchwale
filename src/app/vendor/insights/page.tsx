@@ -44,20 +44,34 @@ export default function VendorInsightsPage() {
   });
   const topDishes = Object.values(dishCount).sort((a, b) => b.count - a.count).slice(0, 5);
 
+  // Today's stats
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const todayOrders = orders.filter(o => {
+    const t = o.createdAt?.seconds ? o.createdAt.seconds * 1000 : 0;
+    return t >= startOfToday.getTime();
+  });
+  const todayRevenue = todayOrders.filter(o => o.status !== "cancelled").reduce((s, o) => s + (Number(o.total) || 0), 0);
+
   // Last 7 days orders
-  const now = Date.now();
   const dayMs = 86400000;
   const weeklyData = Array.from({ length: 7 }, (_, i) => {
-    const dayStart = now - (6 - i) * dayMs;
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    d.setHours(0, 0, 0, 0);
+    const dayStart = d.getTime();
     const dayEnd = dayStart + dayMs;
+
     const dayOrders = orders.filter(o => {
-      const t = o.createdAt?.seconds * 1000;
+      const t = o.createdAt?.seconds ? o.createdAt.seconds * 1000 : 0;
       return t >= dayStart && t < dayEnd;
     });
+
     return {
-      day: new Date(dayStart).toLocaleDateString("en-IN", { weekday: "short" }),
+      day: d.toLocaleDateString("en-IN", { weekday: "short" }),
       orders: dayOrders.length,
-      revenue: dayOrders.reduce((s, o) => s + (Number(o.total) || 0), 0),
+      revenue: dayOrders.filter(o => o.status !== "cancelled").reduce((s, o) => s + (Number(o.total) || 0), 0),
     };
   });
 
@@ -78,9 +92,22 @@ export default function VendorInsightsPage() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="text-4xl font-black text-white tracking-tight">Insights</h1>
-        <p className="text-muted mt-2">Your kitchen's performance at a glance.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-white tracking-tight italic uppercase">Insights</h1>
+          <p className="text-muted mt-2">Deep dive into your kitchen's performance metrics.</p>
+        </div>
+        <div className="flex gap-4 p-4 bg-secondary/30 rounded-[24px] border border-white/5">
+          <div className="text-right">
+            <div className="text-[10px] font-black text-muted uppercase tracking-widest">Today's Revenue</div>
+            <div className="text-xl font-black text-primary">₹{todayRevenue.toLocaleString()}</div>
+          </div>
+          <div className="w-px h-10 bg-white/5" />
+          <div className="text-right">
+            <div className="text-[10px] font-black text-muted uppercase tracking-widest">Today's Orders</div>
+            <div className="text-xl font-black text-white">{todayOrders.length}</div>
+          </div>
+        </div>
       </div>
 
       {/* Stat Cards */}
