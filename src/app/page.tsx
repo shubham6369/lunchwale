@@ -73,19 +73,15 @@ export default function HomePage() {
     // 2. Listen to all dishes (using collectionGroup)
     let unsubDishes = () => {};
     import("firebase/firestore").then(({ collectionGroup }) => {
-      const dishesGroup = collectionGroup(db, "dishes");
-      const dishesQuery = query(
-        dishesGroup,
-        where("isAvailable", "==", true),
-        limit(100)
-      );
+      const dishesQuery = query(collectionGroup(db, 'dishes'), where('isAvailable', '==', true));
 
       unsubDishes = onSnapshot(dishesQuery, (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          vendorId: doc.ref.parent.parent?.id || "",
-          ...doc.data()
-        }));
+        const data = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            vendorId: doc.ref.parent.parent?.id || "",
+            ...doc.data()
+          }));
           
         setDishes(data);
         setFilteredDishes(data);
