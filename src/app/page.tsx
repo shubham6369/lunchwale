@@ -47,10 +47,15 @@ export default function HomePage() {
   const [dishFilter, setDishFilter] = useState("All");
   const [loadingDishes, setLoadingDishes] = useState(true);
 
+  // Live Stats
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [latestActivity, setLatestActivity] = useState<string | null>(null);
+
   const { cartCount } = useCart();
   const { user } = useAuth();
 
-  // Fetch vendors and dishes in real-time
+  // Fetch vendors, dishes, and live stats in real-time
   useEffect(() => {
     // 1. Listen to active vendors
     const vendorsQuery = query(
@@ -92,9 +97,48 @@ export default function HomePage() {
       });
     });
 
+    // 3. Listen to Live User Count (Users collection is typically smaller)
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      setTotalUsers(snapshot.size);
+    });
+
+    // 4. Live Orders and Recent Activity (Optimized)
+    let isInitialLoad = true;
+    
+    // Get initial total count once
+    import("firebase/firestore").then(({ getCountFromServer }) => {
+      getCountFromServer(collection(db, "orders")).then(snap => {
+        setTotalOrders(snap.data().count);
+      });
+    });
+
+    // Listen for NEW orders only for activity notification and count increments
+    const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(1));
+    const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
+      if (isInitialLoad) {
+        isInitialLoad = false;
+        return;
+      }
+
+      // Handle new activity notification and increment total
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const order = change.doc.data();
+          setTotalOrders(prev => prev + 1); // Increment count locally
+          
+          if (order.vendorName) {
+            setLatestActivity(`Someone just ordered from ${order.vendorName}!`);
+            setTimeout(() => setLatestActivity(null), 5000);
+          }
+        }
+      });
+    });
+
     return () => {
       unsubVendors();
       unsubDishes();
+      unsubUsers();
+      unsubOrders();
     };
   }, []);
 
@@ -168,9 +212,15 @@ export default function HomePage() {
         
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider mb-6">
-              <Star className="w-3 h-3 fill-current" />
-              Trusted by 5000+ Daily Users
+            <div className="flex flex-wrap items-center gap-4 animate-fade-in mb-6">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider">
+                <Star className="w-3 h-3 fill-current" />
+                Trusted by {totalUsers > 0 ? totalUsers.toLocaleString() : "..."}+ Daily Users
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-bold uppercase tracking-wider">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                {totalOrders > 0 ? totalOrders.toLocaleString() : "..."}+ Orders Served
+              </div>
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight mb-8">
               Ghar Jaisa <br />
@@ -414,6 +464,24 @@ export default function HomePage() {
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+
+      {/* Live Activity Notification */}
+      {latestActivity && (
+        <div className="fixed bottom-24 left-6 z-50 animate-slide-up">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-2xl flex items-center gap-4 max-w-sm group hover:scale-105 transition-all duration-300">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-xl shadow-lg shadow-orange-500/20">
+              🔥
+            </div>
+            <div className="flex-1">
+              <p className="text-[9px] uppercase tracking-widest text-orange-400 font-bold mb-0.5">Live Activity</p>
+              <p className="text-xs text-white font-medium leading-tight">
+                {latestActivity}
+              </p>
+            </div>
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
