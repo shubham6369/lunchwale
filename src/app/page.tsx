@@ -29,6 +29,8 @@ import DishCard from "@/components/DishCard";
 import { VendorCardSkeleton } from "@/components/SkeletonLoader";
 
 const DISH_FILTERS = ["All", "Veg", "Non-Veg"];
+const PRICE_FILTERS = ["All", "Under ₹100", "₹100 - ₹200", "₹200+"];
+const RATING_FILTERS = ["All", "4.0+", "4.5+"];
 
 export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -39,12 +41,16 @@ export default function HomePage() {
   const [filteredVendors, setFilteredVendors] = useState<any[]>([]);
   const [vendorSearch, setVendorSearch] = useState("");
   const [loadingVendors, setLoadingVendors] = useState(true);
+  const [userLocation, setUserLocation] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   // Dishes
   const [dishes, setDishes] = useState<any[]>([]);
   const [filteredDishes, setFilteredDishes] = useState<any[]>([]);
   const [dishSearch, setDishSearch] = useState("");
   const [dishFilter, setDishFilter] = useState("All");
+  const [priceFilter, setPriceFilter] = useState("All");
+  const [ratingFilter, setRatingFilter] = useState("All");
   const [loadingDishes, setLoadingDishes] = useState(true);
 
   // Live Stats
@@ -171,9 +177,15 @@ export default function HomePage() {
           d.vendorName?.toLowerCase().includes(q)
         );
       }
+      
+      // Apply Price Filter
+      if (priceFilter === "Under ₹100") result = result.filter((d: any) => d.price < 100);
+      else if (priceFilter === "₹100 - ₹200") result = result.filter((d: any) => d.price >= 100 && d.price <= 200);
+      else if (priceFilter === "₹200+") result = result.filter((d: any) => d.price > 200);
+
       setFilteredDishes(result);
     }
-  }, [vendors, dishes, dishFilter, dishSearch]);
+  }, [vendors, dishes, dishFilter, dishSearch, priceFilter]);
 
   // Filter vendors
   useEffect(() => {
@@ -182,10 +194,66 @@ export default function HomePage() {
       return;
     }
     const q = vendorSearch.toLowerCase();
-    setFilteredVendors(vendors.filter(v =>
-      v.name?.toLowerCase().includes(q) || v.location?.toLowerCase().includes(q)
-    ));
-  }, [vendorSearch, vendors]);
+    let result = vendors.filter(v =>
+      v.name?.toLowerCase().includes(q) || 
+      v.location?.toLowerCase().includes(q) ||
+      v.address?.toLowerCase().includes(q)
+    );
+
+    // Sort by relevance: name match gets priority over location/address match
+    if (q) {
+      result = [...result].sort((a, b) => {
+        const aNameMatch = a.name?.toLowerCase().includes(q) ? 1 : 0;
+        const bNameMatch = b.name?.toLowerCase().includes(q) ? 1 : 0;
+        return bNameMatch - aNameMatch;
+      });
+    }
+
+    // Apply Rating Filter
+    if (ratingFilter === "4.0+") {
+      result = result.filter(v => v.totalReviewCount > 0 && (v.totalRatingSum / v.totalReviewCount) >= 4.0);
+    } else if (ratingFilter === "4.5+") {
+      result = result.filter(v => v.totalReviewCount > 0 && (v.totalRatingSum / v.totalReviewCount) >= 4.5);
+    }
+
+    setFilteredVendors(result);
+  }, [vendorSearch, vendors, ratingFilter]);
+
+  const detectLocation = () => {
+    setIsLocating(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          // In a real app, we'd use a Geocoding API here.
+          // For now, we'll simulate finding the city.
+          const { latitude, longitude } = position.coords;
+          console.log("Detected coordinates:", latitude, longitude);
+          
+          // Simulation: random nearby area names
+          const locations = ["Vasant Kunj, Delhi", "Sector 62, Noida", "Cyber Hub, Gurgaon", "Koramangala, Bangalore"];
+          const detected = locations[Math.floor(Math.random() * locations.length)];
+          
+          setUserLocation(detected);
+          setVendorSearch(detected);
+          setIsLocating(false);
+          
+          // Show a nice toast or activity
+          setLatestActivity(`Location detected: ${detected}`);
+          setTimeout(() => setLatestActivity(null), 3000);
+        },
+        (error) => {
+          console.error("Error detecting location:", error);
+          setIsLocating(false);
+          setLatestActivity("Could not detect location. Please search manually.");
+          setTimeout(() => setLatestActivity(null), 3000);
+        }
+      );
+    } else {
+      setIsLocating(false);
+      setLatestActivity("Geolocation is not supported by your browser.");
+      setTimeout(() => setLatestActivity(null), 3000);
+    }
+  };
 
   // Filter dishes
   useEffect(() => {
@@ -200,8 +268,14 @@ export default function HomePage() {
         d.vendorName?.toLowerCase().includes(q)
       );
     }
+
+    // Apply Price Filter
+    if (priceFilter === "Under ₹100") result = result.filter(d => d.price < 100);
+    else if (priceFilter === "₹100 - ₹200") result = result.filter(d => d.price >= 100 && d.price <= 200);
+    else if (priceFilter === "₹200+") result = result.filter(d => d.price > 200);
+
     setFilteredDishes(result);
-  }, [dishSearch, dishFilter, dishes]);
+  }, [dishSearch, dishFilter, dishes, priceFilter]);
 
   return (
     <main className="min-h-screen bg-background text-foreground selection:bg-primary/30">
@@ -344,18 +418,37 @@ export default function HomePage() {
                     key={f}
                     onClick={() => setDishFilter(f)}
                     className={cn(
-                      "px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap",
+                      "px-6 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border whitespace-nowrap active:scale-95",
                       dishFilter === f
-                        ? "bg-primary text-black border-primary"
-                        : "bg-white/5 text-muted border-white/10 hover:border-white/20"
+                        ? "bg-gradient-to-r from-primary to-orange-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(249,115,22,0.4)]"
+                        : "bg-white/5 text-muted border-white/5 hover:bg-white/10 hover:border-white/10"
                     )}
                   >
-                    {f === "Veg" && <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5" />}
-                    {f === "Non-Veg" && <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-1.5" />}
+                    {f === "Veg" && <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />}
+                    {f === "Non-Veg" && <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />}
                     {f}
                   </button>
                 ))}
               </div>
+
+              {/* Price filter pills */}
+              <div className="flex gap-2">
+                {PRICE_FILTERS.map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setPriceFilter(f)}
+                    className={cn(
+                      "px-6 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border whitespace-nowrap active:scale-95",
+                      priceFilter === f
+                        ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-transparent shadow-[0_8px_20px_-5px_rgba(16,185,129,0.4)]"
+                        : "bg-white/5 text-muted border-white/5 hover:bg-white/10 hover:border-white/10"
+                    )}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
@@ -420,17 +513,45 @@ export default function HomePage() {
               </h2>
               <p className="text-muted text-sm">Browse verified home kitchens near you</p>
             </div>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-              <input 
-                type="text" 
-                value={vendorSearch}
-                onChange={(e) => setVendorSearch(e.target.value)}
-                placeholder="Search kitchens or locations..." 
-                className="pl-12 pr-6 py-3 bg-background border border-white/10 rounded-xl outline-none focus:border-primary/50 transition-all text-sm w-64 text-white"
-              />
-            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Rating filter pills */}
+              <div className="flex gap-2">
+                {RATING_FILTERS.map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setRatingFilter(f)}
+                    className={cn(
+                      "px-4 py-2 rounded-xl text-[10px] font-bold transition-all border whitespace-nowrap flex items-center gap-1.5",
+                      ratingFilter === f
+                        ? "bg-primary text-black border-primary"
+                        : "bg-white/5 text-muted border-white/10 hover:border-white/20"
+                    )}
+                  >
+                    {f !== "All" && <Star className={cn("w-3 h-3", ratingFilter === f ? "fill-black" : "fill-primary")} />}
+                    {f}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary transition-colors" />
+                <input 
+                  type="text" 
+                  value={vendorSearch}
+                  onChange={(e) => setVendorSearch(e.target.value)}
+                  placeholder="Search kitchens or locations..." 
+                  className="pl-12 pr-24 py-3 bg-background border border-white/10 rounded-xl outline-none focus:border-primary/50 transition-all text-sm w-80 text-white shadow-xl"
+                />
+                <button 
+                  onClick={detectLocation}
+                  disabled={isLocating}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border border-primary/20 disabled:opacity-50"
+                >
+                  {isLocating ? "..." : "Nearby"}
+                </button>
+              </div>
           </div>
+        </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {loadingVendors ? (

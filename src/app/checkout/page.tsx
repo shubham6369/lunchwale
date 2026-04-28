@@ -30,6 +30,7 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"UPI" | "COD">("UPI");
 
   const deliveryFee = 25;
   const platformFee = 5;
@@ -45,6 +46,31 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     try {
+      if (paymentMethod === "COD") {
+        const newOrder = {
+          userId: user.uid,
+          userName: user.displayName || "Customer",
+          vendorId: items[0].vendorId,
+          vendorName: items[0].vendorName,
+          items: items,
+          total: totalAmount,
+          subtotal: cartTotal,
+          tax: gst,
+          deliveryFee,
+          platformFee,
+          status: "pending",
+          paymentStatus: "pending",
+          address: profile?.address || "Home - Default Address",
+          paymentMethod: "COD",
+        };
+
+        const id = await createOrder(newOrder);
+        setOrderId(id);
+        clearCart();
+        router.push(`/checkout/success?orderId=${id}`);
+        return;
+      }
+
       // 1. Create Razorpay Order via API
       const res = await fetch("/api/razorpay/order", {
         method: "POST",
@@ -279,7 +305,13 @@ export default function CheckoutPage() {
                         Payment Method
                       </h3>
                       <div className="space-y-3">
-                         <div className="bg-secondary/40 border border-white/10 p-4 rounded-2xl flex items-center justify-between cursor-pointer group hover:border-primary/50">
+                        <div 
+                          onClick={() => setPaymentMethod("UPI")}
+                          className={cn(
+                            "p-4 rounded-2xl flex items-center justify-between cursor-pointer group transition-all",
+                            paymentMethod === "UPI" ? "bg-primary/10 border-2 border-primary" : "bg-secondary/40 border border-white/10 hover:border-white/20"
+                          )}
+                        >
                           <div className="flex items-center gap-4">
                             <Smartphone className="w-6 h-6 text-primary" />
                             <div>
@@ -287,8 +319,33 @@ export default function CheckoutPage() {
                               <p className="text-[10px] text-muted">Pay securely with UPI</p>
                             </div>
                           </div>
-                          <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                            <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                            paymentMethod === "UPI" ? "border-primary" : "border-white/20"
+                          )}>
+                            {paymentMethod === "UPI" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                          </div>
+                        </div>
+
+                        <div 
+                          onClick={() => setPaymentMethod("COD")}
+                          className={cn(
+                            "p-4 rounded-2xl flex items-center justify-between cursor-pointer group transition-all",
+                            paymentMethod === "COD" ? "bg-primary/10 border-2 border-primary" : "bg-secondary/40 border border-white/10 hover:border-white/20"
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <Truck className="w-6 h-6 text-primary" />
+                            <div>
+                              <p className="font-bold">Cash on Delivery</p>
+                              <p className="text-[10px] text-muted">Pay when you receive</p>
+                            </div>
+                          </div>
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                            paymentMethod === "COD" ? "border-primary" : "border-white/20"
+                          )}>
+                            {paymentMethod === "COD" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                           </div>
                         </div>
                         <div className="bg-secondary/20 border border-white/5 opacity-50 p-4 rounded-2xl flex items-center justify-between grayscale">
@@ -314,8 +371,8 @@ export default function CheckoutPage() {
                           </div>
                         ) : (
                           <>
-                            <ShieldCheck className="w-5 h-5" />
-                            Pay ₹{totalAmount}
+                            {paymentMethod === "UPI" ? <ShieldCheck className="w-5 h-5" /> : <Truck className="w-5 h-5" />}
+                            {paymentMethod === "UPI" ? `Pay ₹${totalAmount}` : `Order COD ₹${totalAmount}`}
                           </>
                         )}
                       </button>

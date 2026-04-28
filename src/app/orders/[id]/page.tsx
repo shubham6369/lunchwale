@@ -12,7 +12,9 @@ import {
   MapPin,
   Clock,
   Star,
-  MessageCircle
+  MessageCircle,
+  Navigation,
+  Compass
 } from "lucide-react";
 import Link from "next/link";
 import { getOrder } from "@/lib/firestore";
@@ -83,6 +85,96 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="max-w-xl mx-auto p-6 space-y-8">
+        {/* Live Tracking Map (Simulated Premium Map) */}
+        <div className="bg-secondary rounded-[40px] overflow-hidden border border-white/5 shadow-2xl relative">
+          <div className="h-64 relative bg-[#151515] overflow-hidden">
+            {/* Map Grid Pattern */}
+            <div className="absolute inset-0 opacity-20" style={{ 
+              backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', 
+              backgroundSize: '24px 24px' 
+            }} />
+            
+            {/* Simulated Roads */}
+            <div className="absolute top-1/2 left-0 w-full h-1 bg-white/5 -rotate-12" />
+            <div className="absolute top-0 left-1/3 w-1 h-full bg-white/5 rotate-6" />
+            <div className="absolute bottom-1/4 left-0 w-full h-1 bg-white/5 rotate-3" />
+
+            {/* Pulsing Destination Pin */}
+            <div className="absolute top-1/3 right-1/4 -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/40 rounded-full animate-ping scale-150" />
+                <div className="bg-primary p-2 rounded-full shadow-glow">
+                  <MapPin className="w-5 h-5 text-black" />
+                </div>
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/80 backdrop-blur-md px-2 py-1 rounded-md border border-white/10">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Your Home</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Partner - Animated if Out for Delivery */}
+            <motion.div 
+              initial={{ left: "10%", top: "60%" }}
+              animate={order.status === 'out_for_delivery' ? { 
+                left: ["10%", "40%", "45%", "60%"],
+                top: ["60%", "50%", "55%", "40%"]
+              } : {}}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+              className="absolute z-20"
+            >
+              <div className="relative">
+                <div className="bg-white p-2 rounded-full shadow-premium border-2 border-primary">
+                  <Truck className="w-4 h-4 text-black" />
+                </div>
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary px-2 py-1 rounded-md shadow-glow">
+                  <span className="text-[10px] font-bold text-black uppercase tracking-tighter">Delivery Partner</span>
+                </div>
+                {/* Direction Pointer */}
+                <div className="absolute -right-2 top-1/2 -translate-y-1/2 rotate-90 text-primary">
+                  <Navigation className="w-3 h-3 fill-current" />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Vendor Pin */}
+            <div className="absolute bottom-1/4 left-1/4 z-10">
+              <div className="bg-secondary p-2 rounded-full border border-white/20 shadow-xl">
+                <ChefHat className="w-4 h-4 text-primary" />
+              </div>
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                <span className="text-[9px] font-bold text-muted uppercase tracking-tighter">Kitchen</span>
+              </div>
+            </div>
+
+            {/* Map Overlay Controls */}
+            <div className="absolute top-4 right-4 flex flex-col gap-2">
+              <button className="p-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 hover:bg-black/80 transition-all">
+                <Compass className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            {/* Order Status Badge on Map */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] bg-black/60 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                  {order.status === 'pending' && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                  {order.status === 'preparing' && <ChefHat className="w-4 h-4 text-primary" />}
+                  {order.status === 'out_for_delivery' && <Truck className="w-4 h-4 text-primary" />}
+                  {order.status === 'delivered' && <Package className="w-4 h-4 text-primary" />}
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted uppercase font-bold tracking-widest">Current Status</p>
+                  <p className="text-sm font-bold text-white capitalize">{order.status.replace(/_/g, ' ')}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-muted uppercase font-bold tracking-widest">ETA</p>
+                <p className="text-sm font-bold text-primary">12-15 Mins</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Status Stepper */}
         <div className="bg-secondary p-8 rounded-3xl border border-white/5 shadow-xl">
           <div className="relative space-y-8">

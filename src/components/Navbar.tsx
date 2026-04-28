@@ -11,7 +11,8 @@ import {
   LogOut,
   Settings,
   History,
-  ChefHat
+  ChefHat,
+  Heart
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
@@ -126,6 +127,10 @@ export default function Navbar() {
                         </Link>
                          <Link href="/profile" className="flex items-center gap-3 w-full p-3 hover:bg-white/5 rounded-2xl text-[10px] font-bold transition-all">
                           <User className="w-4 h-4 text-muted" /> Shared Profile
+                        </Link>
+                        
+                        <Link href="/favorites" className="flex items-center gap-3 w-full p-3 hover:bg-white/5 rounded-2xl text-[10px] font-bold transition-all">
+                          <Heart className="w-4 h-4 text-muted" /> Favorites
                         </Link>
 
                         {profile?.role === 'vendor' ? (

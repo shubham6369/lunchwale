@@ -7,6 +7,9 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -29,6 +32,9 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   signInWithGoogle: (role?: UserProfile['role']) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, role?: UserProfile['role']) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -89,12 +95,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(prev => prev ? { ...prev, ...data } : null);
   };
 
+  const signInWithEmail = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const signUpWithEmail = async (email: string, password: string, role: UserProfile['role'] = "customer") => {
+    sessionStorage.setItem('intended_role', role);
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
+  
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout, updateProfile, signInWithGoogle }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      logout, 
+      updateProfile, 
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      sendPasswordReset
+    }}>
       {children}
     </AuthContext.Provider>
   );

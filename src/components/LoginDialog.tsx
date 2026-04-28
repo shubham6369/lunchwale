@@ -9,7 +9,9 @@ import {
   ArrowLeft, 
   ShieldCheck, 
   Utensils,
-  Loader2
+  Loader2,
+  Mail,
+  Lock
 } from "lucide-react";
 import { 
   RecaptchaVerifier, 
@@ -26,7 +28,7 @@ interface LoginDialogProps {
   onClose: () => void;
 }
 
-type Step = "choose" | "phone" | "otp" | "success";
+type Step = "choose" | "phone" | "otp" | "email" | "signup" | "forgot_password" | "success";
 
 // Google "G" SVG icon
 const GoogleIcon = () => (
@@ -55,12 +57,16 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("choose");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
+  const [intendedRole, setIntendedRole] = useState<"customer" | "vendor">("customer");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const { signInWithEmail, signUpWithEmail, sendPasswordReset } = useAuth();
 
   useEffect(() => {
     if (!isOpen) {
@@ -68,6 +74,8 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
         setStep("choose");
         setPhoneNumber("");
         setOtp("");
+        setEmail("");
+        setPassword("");
         setError(null);
         setLoading(false);
         setGoogleLoading(false);
@@ -158,6 +166,54 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
     }
   };
 
+  // ── Email Auth ──────────────────────────────────────────
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      if (step === "signup") {
+        await signUpWithEmail(email, password, intendedRole);
+      } else {
+        await signInWithEmail(email, password);
+      }
+      setStep("success");
+      setTimeout(() => {
+        onClose();
+        const role = profile?.role;
+        if (role === 'vendor') {
+          router.push('/vendor');
+        } else if (role === 'admin') {
+          router.push('/admin');
+        }
+      }, 2000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await sendPasswordReset(email);
+      setLatestActivity("Reset link sent! Please check your inbox.");
+      setStep("email");
+    } catch (err: any) {
+      setError(err.message || "Failed to send reset link.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Activity Toast Simulation (Internal helper)
+  const setLatestActivity = (msg: string) => {
+    // This could trigger a global toast, but for now we'll just log or use local error state
+    console.log("Activity:", msg);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -211,28 +267,32 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                     <button
                       onClick={() => handleGoogleSignIn('customer')}
                       disabled={googleLoading}
-                      className="w-full flex items-center justify-center gap-3 py-4 bg-white text-gray-800 rounded-2xl font-bold hover:bg-gray-100 transition-all mb-4 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
+                      className="w-full flex items-center justify-center gap-3 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary-dark transition-all mb-4 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_10px_25px_-5px_rgba(249,115,22,0.3)] group"
                     >
                       {googleLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+                        <Loader2 className="w-5 h-5 animate-spin text-white/50" />
                       ) : (
-                        <GoogleIcon />
+                        <div className="bg-white p-1 rounded-full group-hover:scale-110 transition-transform">
+                          <GoogleIcon />
+                        </div>
                       )}
-                      {googleLoading ? "Signing in…" : "Continue as Customer"}
+                      {googleLoading ? "Signing in…" : "Login as Customer (Google)"}
                     </button>
 
                     {/* Google button - Vendor */}
                     <button
                       onClick={() => handleGoogleSignIn('vendor')}
                       disabled={googleLoading}
-                      className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/10 transition-all mb-4 disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/10 transition-all mb-4 disabled:opacity-60 disabled:cursor-not-allowed group"
                     >
                       {googleLoading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
                       ) : (
-                        <GoogleIcon />
+                        <div className="bg-white/10 p-1 rounded-full group-hover:scale-110 transition-transform">
+                          <GoogleIcon />
+                        </div>
                       )}
-                      {googleLoading ? "Signing in…" : "Continue as Vendor"}
+                      {googleLoading ? "Signing in…" : "Login as Partner (Google)"}
                     </button>
 
                     {/* Divider */}
@@ -242,14 +302,35 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                       <div className="flex-1 h-px bg-white/10" />
                     </div>
 
+                    {/* Email Login button */}
+                    <button
+                      onClick={() => setStep("email")}
+                      className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/10 transition-all mb-4"
+                    >
+                      <Mail className="w-5 h-5 text-primary" />
+                      Login with Email
+                    </button>
+
                     {/* Phone button */}
                     <button
                       onClick={() => setStep("phone")}
-                      className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/10 transition-all"
+                      className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/10 transition-all mb-6"
                     >
                       <Phone className="w-5 h-5 text-primary" />
                       Continue with Phone (OTP)
                     </button>
+
+                    <div className="text-center">
+                      <p className="text-muted text-xs">
+                        Don't have an account?{" "}
+                        <button 
+                          onClick={() => setStep("signup")}
+                          className="text-primary font-bold hover:underline"
+                        >
+                          Sign Up
+                        </button>
+                      </p>
+                    </div>
 
                     {error && (
                       <p className="mt-4 text-xs text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20">
@@ -376,6 +457,178 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                     </motion.div>
                     <h2 className="text-3xl font-bold mb-2 text-white">Welcome!</h2>
                     <p className="text-muted text-sm">You&apos;re signed in. Enjoy your meals 🍱</p>
+                  </motion.div>
+                )}
+
+                {/* ─── Step: Email Login/Signup ─── */}
+                {(step === "email" || step === "signup") && (
+                  <motion.div
+                    key={step}
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -20, opacity: 0 }}
+                  >
+                    <button
+                      onClick={() => setStep("choose")}
+                      className="flex items-center gap-2 text-primary text-xs font-bold mb-6 hover:underline"
+                    >
+                      <ArrowLeft className="w-3 h-3" /> Back
+                    </button>
+                    <h2 className="text-3xl font-bold mb-2 text-white">
+                      {step === "signup" ? "Create Account" : "Welcome Back"}
+                    </h2>
+                    <p className="text-muted text-sm mb-8">
+                      {step === "signup" 
+                        ? "Join LunchNow to start ordering." 
+                        : "Sign in with your email and password."}
+                    </p>
+
+                    <form onSubmit={handleEmailSubmit} className="space-y-4">
+                      {step === "signup" && (
+                        <div className="space-y-2 mb-4">
+                          <label className="text-xs font-bold text-muted uppercase tracking-wider ml-1">I am a</label>
+                          <div className="flex gap-4">
+                            <button
+                              type="button"
+                              onClick={() => setIntendedRole("customer")}
+                              className={cn(
+                                "flex-1 py-3 rounded-xl border font-bold transition-all",
+                                intendedRole === "customer" 
+                                  ? "bg-primary/10 border-primary text-primary" 
+                                  : "bg-white/5 border-white/10 text-muted"
+                              )}
+                            >
+                              Customer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIntendedRole("vendor")}
+                              className={cn(
+                                "flex-1 py-3 rounded-xl border font-bold transition-all",
+                                intendedRole === "vendor" 
+                                  ? "bg-primary/10 border-primary text-primary" 
+                                  : "bg-white/5 border-white/10 text-muted"
+                              )}
+                            >
+                              Vendor
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted uppercase tracking-wider ml-1">Email Address</label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                          <input
+                            type="email"
+                            placeholder="name@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-background border border-white/10 focus:border-primary/50 rounded-2xl py-4 pl-12 pr-4 outline-none transition-all text-white placeholder:opacity-30"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted uppercase tracking-wider ml-1">Password</label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-background border border-white/10 focus:border-primary/50 rounded-2xl py-4 pl-12 pr-4 outline-none transition-all text-white placeholder:opacity-30"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {step === "email" && (
+                        <div className="flex justify-end">
+                          <button 
+                            type="button"
+                            onClick={() => setStep("forgot_password")}
+                            className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider"
+                          >
+                            Forgot Password?
+                          </button>
+                        </div>
+                      )}
+
+                      {error && (
+                        <p className="text-xs text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20">{error}</p>
+                      )}
+
+                      <button
+                        disabled={loading}
+                        className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                          step === "signup" ? "Create Account" : "Sign In"
+                        )}
+                      </button>
+
+                      <p className="text-center text-xs text-muted">
+                        {step === "signup" ? "Already have an account?" : "Don't have an account?"}{" "}
+                        <button 
+                          type="button"
+                          onClick={() => setStep(step === "signup" ? "email" : "signup")} 
+                          className="text-primary font-bold hover:underline"
+                        >
+                          {step === "signup" ? "Sign In" : "Sign Up"}
+                        </button>
+                      </p>
+                    </form>
+                  </motion.div>
+                )}
+
+                {/* ─── Step: Forgot Password ─── */}
+                {step === "forgot_password" && (
+                  <motion.div
+                    key="forgot"
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -20, opacity: 0 }}
+                  >
+                    <button
+                      onClick={() => setStep("email")}
+                      className="flex items-center gap-2 text-primary text-xs font-bold mb-6 hover:underline"
+                    >
+                      <ArrowLeft className="w-3 h-3" /> Back
+                    </button>
+                    <h2 className="text-3xl font-bold mb-2 text-white">Reset Password</h2>
+                    <p className="text-muted text-sm mb-8">Enter your email to receive a reset link.</p>
+
+                    <form onSubmit={handleForgotPassword} className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted uppercase tracking-wider ml-1">Email Address</label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                          <input
+                            type="email"
+                            placeholder="name@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-background border border-white/10 focus:border-primary/50 rounded-2xl py-4 pl-12 pr-4 outline-none transition-all text-white placeholder:opacity-30"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {error && (
+                        <p className="text-xs text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20">{error}</p>
+                      )}
+
+                      <button
+                        disabled={loading || !email}
+                        className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Link"}
+                      </button>
+                    </form>
                   </motion.div>
                 )}
 
