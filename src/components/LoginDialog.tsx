@@ -76,11 +76,11 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
   }, [isOpen]);
 
   // ── Google Sign-in ──────────────────────────────────────
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (role: "customer" | "vendor" = "customer") => {
     setGoogleLoading(true);
     setError(null);
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(role);
       setStep("success");
       
       // Handle redirection after a short delay
@@ -207,9 +207,9 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                     <h2 className="text-3xl font-bold mb-1 text-white">Welcome Back</h2>
                     <p className="text-muted text-sm mb-8">Sign in to order your favourite meals.</p>
 
-                    {/* Google button */}
+                    {/* Google button - Customer */}
                     <button
-                      onClick={handleGoogleSignIn}
+                      onClick={() => handleGoogleSignIn('customer')}
                       disabled={googleLoading}
                       className="w-full flex items-center justify-center gap-3 py-4 bg-white text-gray-800 rounded-2xl font-bold hover:bg-gray-100 transition-all mb-4 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
                     >
@@ -218,7 +218,21 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                       ) : (
                         <GoogleIcon />
                       )}
-                      {googleLoading ? "Signing in…" : "Continue with Google"}
+                      {googleLoading ? "Signing in…" : "Continue as Customer"}
+                    </button>
+
+                    {/* Google button - Vendor */}
+                    <button
+                      onClick={() => handleGoogleSignIn('vendor')}
+                      disabled={googleLoading}
+                      className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/10 transition-all mb-4 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {googleLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                      ) : (
+                        <GoogleIcon />
+                      )}
+                      {googleLoading ? "Signing in…" : "Continue as Vendor"}
                     </button>
 
                     {/* Divider */}

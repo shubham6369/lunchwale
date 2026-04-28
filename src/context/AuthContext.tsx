@@ -28,7 +28,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (role?: UserProfile['role']) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userSnap.exists()) {
           setProfile(userSnap.data() as UserProfile);
         } else {
+          // Check for intended role in sessionStorage (set during Google Sign-in)
+          const intendedRole = sessionStorage.getItem('intended_role') as UserProfile['role'] || "customer";
+          sessionStorage.removeItem('intended_role');
+
           // Auto-create Firestore profile for new users (phone OR Google)
           const newProfile: UserProfile = {
             uid: firebaseUser.uid,
@@ -55,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: firebaseUser.email,
             displayName: firebaseUser.displayName || undefined,
             photoURL: firebaseUser.photoURL || undefined,
-            role: "customer",
+            role: intendedRole,
           };
           await setDoc(userRef, { ...newProfile, createdAt: serverTimestamp() });
           setProfile(newProfile);
@@ -69,7 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (role: UserProfile['role'] = "customer") => {
+    // Store role in sessionStorage for the onAuthStateChanged listener
+    sessionStorage.setItem('intended_role', role);
+    
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     await signInWithPopup(auth, provider);
