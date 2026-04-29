@@ -46,8 +46,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
   React.useEffect(() => {
     const fetchVendorData = async () => {
       setLoading(true);
-      const res = await params;
-      const id = res.id;
+      const id = params.id; // params is sync in Next.js App Router
       const { getVendorDishes, getVendorReviews } = await import("@/lib/firestore");
       const [vendorData, dishesData, reviewsData] = await Promise.all([
         getVendor(id),

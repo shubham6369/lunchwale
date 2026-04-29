@@ -184,15 +184,18 @@ export const submitReview = async (reviewData: {
 };
 
 export const getVendorReviews = async (vendorId: string) => {
-  const reviewsRef = collection(db, "reviews");
-  const q = query(
-    reviewsRef,
-    where("vendorId", "==", vendorId),
-    orderBy("createdAt", "desc"),
-    limit(50)
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    const reviewsRef = collection(db, "reviews");
+    // Only filter by vendorId — no orderBy to avoid composite index requirement
+    const q = query(reviewsRef, where("vendorId", "==", vendorId), limit(50));
+    const snap = await getDocs(q);
+    const reviews = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort client-side
+    return reviews.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return [];
+  }
 };
 
 // Vendor Operations
@@ -264,10 +267,14 @@ export const deleteDish = async (vendorId: string, dishId: string) => {
 };
 
 export const getVendorDishes = async (vendorId: string) => {
-  const dishesRef = collection(db, "vendors", vendorId, "dishes");
-  const q = query(dishesRef, orderBy("category", "asc"));
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    const dishesRef = collection(db, "vendors", vendorId, "dishes");
+    const snap = await getDocs(dishesRef); // no orderBy to avoid missing index errors
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching dishes:", error);
+    return [];
+  }
 };
 
 // Admin & Payout Operations
