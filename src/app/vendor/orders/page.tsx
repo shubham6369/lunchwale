@@ -25,32 +25,39 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function VendorOrdersPage() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // For now, using a placeholder vendor ID. In a real app, this comes from user profile.
-    const vendorId = "maa-ka-swaad"; 
+    if (!user) return;
     
     const ordersRef = collection(db, "orders");
     const q = query(
       ordersRef, 
-      where("vendorId", "==", vendorId),
-      orderBy("createdAt", "desc")
+      where("vendorId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ordersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const ordersData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => {
+          const timeA = a.createdAt?.seconds || 0;
+          const timeB = b.createdAt?.seconds || 0;
+          return timeB - timeA;
+        });
       setOrders(ordersData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Orders page listener error:", error);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const updateOrderStatus = async (orderId: string, status: string, userId: string) => {
     try {

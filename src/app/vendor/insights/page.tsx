@@ -15,14 +15,21 @@ export default function VendorInsightsPage() {
   useEffect(() => {
     if (!user) return;
     const fetchOrders = async () => {
-      const q = query(
-        collection(db, "orders"),
-        where("vendorId", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
-      const snap = await getDocs(q);
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
+      try {
+        const q = query(
+          collection(db, "orders"),
+          where("vendorId", "==", user.uid)
+        );
+        const snap = await getDocs(q);
+        const ordersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Sort client-side
+        ordersData.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        setOrders(ordersData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching insights orders:", error);
+        setLoading(false);
+      }
     };
     fetchOrders();
   }, [user]);

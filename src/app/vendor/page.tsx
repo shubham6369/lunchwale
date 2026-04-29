@@ -96,15 +96,22 @@ export default function VendorDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Listen to orders for this specific vendor
+    // Listen to orders for this specific vendor — remove orderBy to avoid index errors
     const q = query(
       collection(db, "orders"),
-      where("vendorId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      where("vendorId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Map and sort client-side
+      const ordersData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => {
+          const timeA = a.createdAt?.toDate?.()?.getTime() || 0;
+          const timeB = b.createdAt?.toDate?.()?.getTime() || 0;
+          return timeB - timeA;
+        });
+
       setOrders(ordersData);
       
       // Calculate Stats
@@ -134,9 +141,9 @@ export default function VendorDashboard() {
 
       setStats({
         activeOrders: active,
-        totalRevenue: todayRevenue, // Showing Today's Revenue as primary
-        totalCustomers: todayOrdersCount, // Showing Today's Orders as secondary
-        pendingPayout: totalRevenue * 0.9 // Assuming 10% platform commission
+        totalRevenue: todayRevenue, 
+        totalCustomers: todayOrdersCount,
+        pendingPayout: totalRevenue * 0.9 
       });
       
       // Handle New Order Alerts
@@ -146,7 +153,6 @@ export default function VendorDashboard() {
           const orderTime = newOrder.createdAt?.toDate?.() || new Date();
           const now = new Date();
 
-          // Only alert for very recent orders (within 1 minute)
           if (now.getTime() - orderTime.getTime() < 60000) {
             playNotification();
             if (isVoiceEnabled) {
@@ -156,6 +162,9 @@ export default function VendorDashboard() {
         }
       });
 
+      setLoading(false);
+    }, (error) => {
+      console.error("Orders listener error:", error);
       setLoading(false);
     });
 
