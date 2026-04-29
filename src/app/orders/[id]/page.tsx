@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { 
   CheckCircle2, 
   ChefHat, 
@@ -113,7 +113,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Delivery Partner - Animated if Out for Delivery */}
-            <motion.div 
+            <m.div 
               initial={{ left: "10%", top: "60%" }}
               animate={order.status === 'out_for_delivery' ? { 
                 left: ["10%", "40%", "45%", "60%"],
@@ -134,7 +134,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                   <Navigation className="w-3 h-3 fill-current" />
                 </div>
               </div>
-            </motion.div>
+            </m.div>
 
             {/* Vendor Pin */}
             <div className="absolute bottom-1/4 left-1/4 z-10">
@@ -199,13 +199,13 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                     <h3 className={`font-bold ${isActive ? "text-white" : "text-muted"}`}>{step.label}</h3>
                     <p className="text-xs text-muted">{step.description}</p>
                     {isCurrent && (
-                      <motion.div 
+                      <m.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="mt-2 text-[10px] py-1 px-2 bg-primary/20 text-primary rounded-md inline-block font-bold uppercase tracking-wider"
                       >
                         In Progress
-                      </motion.div>
+                      </m.div>
                     )}
                   </div>
                 </div>

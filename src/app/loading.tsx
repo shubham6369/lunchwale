@@ -1,13 +1,13 @@
 "use client";
 
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Utensils } from 'lucide-react';
 
 export default function Loading() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6">
       <div className="relative">
-        <motion.div 
+        <m.div 
           animate={{ 
             rotate: 360,
             scale: [1, 1.1, 1]
@@ -19,7 +19,7 @@ export default function Loading() {
           className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/40 shadow-2xl shadow-primary/20"
         >
           <Utensils className="w-8 h-8 text-primary" />
-        </motion.div>
+        </m.div>
         
         {/* Loading ring */}
         <div className="absolute inset-0 -m-2 opacity-50">
@@ -38,7 +38,7 @@ export default function Loading() {
 
       <div className="flex gap-1.5">
         {[0, 1, 2].map((i) => (
-          <motion.div
+          <m.div
             key={i}
             animate={{ 
               scale: [1, 1.5, 1],

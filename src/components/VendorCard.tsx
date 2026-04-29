@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Star, MapPin, Clock, ShieldCheck, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -69,7 +69,7 @@ export default function VendorCard({
   };
 
   return (
-    <motion.div 
+    <m.div 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -154,6 +154,6 @@ export default function VendorCard({
           </div>
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   );
 }

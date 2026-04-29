@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 
 interface WhatsAppButtonProps {
@@ -21,7 +21,7 @@ export default function WhatsAppButton({
   };
 
   return (
-    <motion.button
+    <m.button
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.1 }}
@@ -39,6 +39,6 @@ export default function WhatsAppButton({
 
       {/* Pulsing Ring Animation */}
       <div className="absolute inset-0 rounded-full border-4 border-[#25D366]/30 animate-ping pointer-events-none" />
-    </motion.button>
+    </m.button>
   );
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { CheckCircle2, ShoppingBag, ArrowRight, Clock, Truck } from "lucide-react";
 import Link from "next/link";
 import { getOrder } from "@/lib/firestore";
@@ -57,34 +57,34 @@ export default function PaymentSuccessPage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.1)_0%,transparent_70%)] pointer-events-none" />
       
       <div className="max-w-3xl mx-auto text-center relative z-10">
-        <motion.div 
+        <m.div 
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", damping: 15 }}
           className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-8 mx-auto shadow-[0_0_50px_rgba(16,185,129,0.3)]"
         >
           <CheckCircle2 className="w-12 h-12 text-black" />
-        </motion.div>
+        </m.div>
 
-        <motion.h1 
+        <m.h1 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
           className="text-5xl md:text-6xl font-bold mb-4"
         >
           Payment <span className="text-emerald-400">Successful!</span>
-        </motion.h1>
+        </m.h1>
 
-        <motion.p 
+        <m.p 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
           className="text-lg text-gray-400 mb-12 max-w-md mx-auto"
         >
           Your order has been received and is being sent to <span className="text-white font-bold">{order?.vendorName || "the kitchen"}</span>.
-        </motion.p>
+        </m.p>
 
-        <motion.div 
+        <m.div 
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
@@ -124,9 +124,9 @@ export default function PaymentSuccessPage() {
               <span>Partner is arriving at the kitchen</span>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
-        <motion.div 
+        <m.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
@@ -145,10 +145,10 @@ export default function PaymentSuccessPage() {
           >
             Back to Home
           </Link>
-        </motion.div>
+        </m.div>
 
         {/* Support Card */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
@@ -168,7 +168,7 @@ export default function PaymentSuccessPage() {
               Contact Support
             </button>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );

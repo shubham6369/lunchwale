@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   ShoppingBag, 
   MapPin, 
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Step Content */}
-                <motion.div
+                <m.div
                   key={step}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -381,7 +381,7 @@ export default function CheckoutPage() {
                       </p>
                     </div>
                   )}
-                </motion.div>
+                </m.div>
               </div>
 
               {/* Right Column: Billing Stats */}
@@ -427,7 +427,7 @@ export default function CheckoutPage() {
             </div>
           ) : (
             /* Order Success State */
-            <motion.div 
+            <m.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="flex flex-col items-center justify-center py-20 text-center"
@@ -465,7 +465,7 @@ export default function CheckoutPage() {
                   Go Back Home
                 </Link>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 

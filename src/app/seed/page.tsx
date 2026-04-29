@@ -5,7 +5,7 @@ import { db } from "@/lib/firestore";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { ShieldCheck } from "lucide-react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 export default function SeedPage() {
   const [status, setStatus] = useState("Idle");
@@ -181,7 +181,7 @@ export default function SeedPage() {
   if (!isMasterAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-md bg-secondary/40 backdrop-blur-xl border border-white/5 p-12 rounded-[40px] shadow-2xl space-y-8"
@@ -213,7 +213,7 @@ export default function SeedPage() {
               {isLoggingIn ? "Verifying..." : "Authorize Seeding"}
             </button>
           </form>
-        </motion.div>
+        </m.div>
       </div>
     );
   }
@@ -230,14 +230,14 @@ export default function SeedPage() {
           {status === "Idle" ? "Click to Seed Database" : status}
         </button>
         {status === "Done!" && (
-          <motion.p 
+          <m.p 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mt-6 text-emerald-500 font-bold"
           >
             Data added successfully! <br />
             <span className="text-muted text-xs font-normal">Go to home page to see results.</span>
-          </motion.p>
+          </m.p>
         )}
       </div>
     </div>

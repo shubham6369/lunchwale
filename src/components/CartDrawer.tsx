@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, MapPin, MessageCircle, DollarSign } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -131,7 +131,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -140,7 +140,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           />
 
           {/* Drawer */}
-          <motion.div
+          <m.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -314,7 +314,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 )}
               </div>
             )}
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>

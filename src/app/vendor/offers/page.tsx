@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getVendorOffers, upsertVendorOffer, deleteVendorOffer, OfferData } from "@/lib/firestore";
 import { Tag, Plus, Edit2, Trash2, Calendar, Scissors, AlertCircle, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 
 export default function VendorOffersPage() {
   const { user } = useAuth();
@@ -168,7 +168,7 @@ export default function VendorOffersPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {offers.map((offer) => (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               key={offer.id}
@@ -255,14 +255,14 @@ export default function VendorOffersPage() {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowModal(false)}
             />
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}

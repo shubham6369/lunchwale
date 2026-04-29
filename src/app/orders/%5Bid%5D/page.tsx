@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { 
   Clock, 
   MapPin, 

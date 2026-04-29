@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   ShoppingBag, 
   TrendingUp, 
@@ -267,7 +267,7 @@ export default function VendorDashboard() {
                 vendorData?.isOpen ? "bg-emerald-500" : "bg-white/10"
               )}
             >
-              <motion.div 
+              <m.div 
                 animate={{ x: vendorData?.isOpen ? 24 : 0 }}
                 className="w-6 h-6 bg-white rounded-full shadow-lg"
               />
@@ -281,7 +281,7 @@ export default function VendorDashboard() {
         {statCards.map((stat, idx) => {
           const Icon = stat.icon;
           return (
-            <motion.div
+            <m.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -298,7 +298,7 @@ export default function VendorDashboard() {
               </div>
               <h3 className="text-muted text-[10px] font-bold uppercase tracking-[0.2em]">{stat.label}</h3>
               <div className="text-3xl font-black mt-2 text-white">{stat.value}</div>
-            </motion.div>
+            </m.div>
           );
         })}
       </div>
@@ -330,7 +330,7 @@ export default function VendorDashboard() {
                 </div>
               ) : (
                 orders.map((order) => (
-                  <motion.div
+                  <m.div
                     key={order.id}
                     layout
                     initial={{ opacity: 0, scale: 0.98 }}
@@ -418,7 +418,7 @@ export default function VendorDashboard() {
                         </div>
                       )}
                     </div>
-                  </motion.div>
+                  </m.div>
                 ))
               )}
             </AnimatePresence>

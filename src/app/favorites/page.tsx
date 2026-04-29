@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { Heart, ArrowLeft, Utensils, Search } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   ShoppingBag, 
   MapPin, 
@@ -107,7 +107,7 @@ export default function VendorOrdersPage() {
         <div className="grid gap-6">
           <AnimatePresence>
             {orders.map((order) => (
-              <motion.div
+              <m.div
                 key={order.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -199,7 +199,7 @@ export default function VendorOrdersPage() {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </AnimatePresence>
         </div>

@@ -22,7 +22,7 @@ import {
   ToggleLeft,
   ToggleRight
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { collection, onSnapshot, query, orderBy, limit, collectionGroup } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
@@ -312,7 +312,7 @@ export default function AdminDashboard() {
   if (profile?.role !== 'admin' && !isMasterAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-md bg-secondary/40 backdrop-blur-xl border border-white/5 p-12 rounded-[40px] shadow-2xl space-y-8"
@@ -348,7 +348,7 @@ export default function AdminDashboard() {
           <p className="text-[9px] text-center text-muted font-bold uppercase tracking-tighter">
             Unauthorized access is strictly prohibited and logged.
           </p>
-        </motion.div>
+        </m.div>
       </div>
     );
   }
@@ -383,7 +383,7 @@ export default function AdminDashboard() {
           
           <AnimatePresence mode="wait">
             {activeTab === "overview" && (
-              <motion.div 
+              <m.div 
                 key="overview"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {cards.map((card, idx) => (
-                    <motion.div
+                    <m.div
                       key={card.title}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -432,7 +432,7 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                       </div>
-                    </motion.div>
+                    </m.div>
                   ))}
                 </div>
 
@@ -508,11 +508,11 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === "users" && (
-              <motion.div 
+              <m.div 
                 key="users"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -580,11 +580,11 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === "orders" && (
-              <motion.div 
+              <m.div 
                 key="orders"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -659,11 +659,11 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === "vendors" && (
-              <motion.div 
+              <m.div 
                 key="vendors"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -739,11 +739,11 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === "payouts" && (
-              <motion.div 
+              <m.div 
                 key="payouts"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -812,11 +812,11 @@ export default function AdminDashboard() {
                     );
                   })}
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === "dishes" && (
-              <motion.div 
+              <m.div 
                 key="dishes"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -892,11 +892,11 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === "reviews" && (
-              <motion.div 
+              <m.div 
                 key="reviews"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -950,7 +950,7 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>

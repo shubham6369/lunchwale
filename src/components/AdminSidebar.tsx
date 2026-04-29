@@ -14,7 +14,7 @@ import {
   UtensilsCrossed
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -88,7 +88,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
               )}
               
               {activeTab === item.id && (
-                <motion.div 
+                <m.div 
                   layoutId="active-pill"
                   className="absolute inset-0 bg-primary pointer-events-none"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}

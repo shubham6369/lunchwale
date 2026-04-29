@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   X, 
   Phone, 
@@ -219,7 +219,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -228,7 +228,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
           />
 
           {/* Dialog */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -254,7 +254,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
 
                 {/* ─── Step: choose method ─── */}
                 {step === "choose" && (
-                  <motion.div
+                  <m.div
                     key="choose"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -337,12 +337,12 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                         {error}
                       </p>
                     )}
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {/* ─── Step: phone ─── */}
                 {step === "phone" && (
-                  <motion.div
+                  <m.div
                     key="phone"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -386,12 +386,12 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Send OTP <ChevronRight className="w-5 h-5" /></>}
                       </button>
                     </form>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {/* ─── Step: OTP ─── */}
                 {step === "otp" && (
-                  <motion.div
+                  <m.div
                     key="otp"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -437,32 +437,32 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                         </button>
                       </p>
                     </form>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {/* ─── Step: success ─── */}
                 {step === "success" && (
-                  <motion.div
+                  <m.div
                     key="success"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="py-12 text-center"
                   >
-                    <motion.div
+                    <m.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 0.5 }}
                       className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6"
                     >
                       <ShieldCheck className="w-10 h-10 text-emerald-400" />
-                    </motion.div>
+                    </m.div>
                     <h2 className="text-3xl font-bold mb-2 text-white">Welcome!</h2>
                     <p className="text-muted text-sm">You&apos;re signed in. Enjoy your meals 🍱</p>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {/* ─── Step: Email Login/Signup ─── */}
                 {(step === "email" || step === "signup") && (
-                  <motion.div
+                  <m.div
                     key={step}
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -582,12 +582,12 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                         </button>
                       </p>
                     </form>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {/* ─── Step: Forgot Password ─── */}
                 {step === "forgot_password" && (
-                  <motion.div
+                  <m.div
                     key="forgot"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -629,7 +629,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Link"}
                       </button>
                     </form>
-                  </motion.div>
+                  </m.div>
                 )}
 
               </AnimatePresence>
@@ -643,7 +643,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                 <span className="text-white underline cursor-pointer">Privacy Policy</span>.
               </p>
             </div>
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>

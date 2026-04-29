@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Utensils, MapPin, Clock, Tag, ArrowRight, Loader2 } from "lucide-react";
 
 export default function VendorOnboarding() {
@@ -75,7 +75,7 @@ export default function VendorOnboarding() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
@@ -86,9 +86,9 @@ export default function VendorOnboarding() {
           <p className="text-gray-400 text-lg">
             Register your kitchen and start reaching thousands of hungry customers.
           </p>
-        </motion.div>
+        </m.div>
 
-        <motion.form 
+        <m.form 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
@@ -209,7 +209,7 @@ export default function VendorOnboarding() {
               </>
             )}
           </button>
-        </motion.form>
+        </m.form>
       </div>
     </div>
   );

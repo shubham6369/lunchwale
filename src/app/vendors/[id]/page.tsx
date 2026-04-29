@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   ChevronLeft, 
   Star, 
@@ -142,7 +142,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 
         <div className="absolute bottom-0 w-full px-6 pb-12">
           <div className="max-w-7xl mx-auto">
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
@@ -167,7 +167,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                 <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> {vendor.deliveryTime || "30-45 min"}</div>
                 <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /> Verified Kitchen</div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         </div>
       </header>
@@ -204,7 +204,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                 <h2 className="text-2xl font-bold">Featured Dishes</h2>
                 <div className="grid gap-4">
                 {dishes.map((dish, index) => (
-                  <motion.div
+                  <m.div
                     key={dish.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -271,7 +271,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                         {vendor.isOpen ? "ADD" : "OFFLINE"}
                       </button>
                     </div>
-                  </motion.div>
+                  </m.div>
                 ))}
               </div>
             </div>
@@ -287,7 +287,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
             ) : (
               <div className="grid gap-4">
                 {reviews.map((review, idx) => (
-                  <motion.div
+                  <m.div
                     key={review.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -314,7 +314,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                     {review.comment && (
                       <p className="text-gray-300 text-sm leading-relaxed mt-2">{review.comment}</p>
                     )}
-                  </motion.div>
+                  </m.div>
                 ))}
               </div>
             )}
@@ -387,7 +387,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
       {/* Floating Mobile Cart */}
       <AnimatePresence>
         {cartCount > 0 && (
-          <motion.div 
+          <m.div 
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
@@ -410,7 +410,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                 View Plate <ChevronDown className="w-4 h-4 -rotate-90" />
               </div>
             </button>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -419,7 +419,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 
       {/* Offline Banner */}
       {!vendor.isOpen && (
-        <motion.div 
+        <m.div 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           className="fixed bottom-0 left-0 right-0 bg-red-500 text-white py-4 px-6 z-50 flex items-center justify-center gap-4 shadow-[0_-10px_40px_rgba(239,68,68,0.3)]"
@@ -430,7 +430,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
           <p className="font-black uppercase tracking-widest text-sm text-center">
             This kitchen is currently offline. You can browse the menu but cannot place orders.
           </p>
-        </motion.div>
+        </m.div>
       )}
     </div>
   );

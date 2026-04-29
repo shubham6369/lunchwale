@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { 
   ShoppingBag, 
   ArrowRight, 
@@ -285,7 +285,7 @@ export default function HomePage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(circle_at_center,rgba(255,87,34,0.08)_0%,transparent_70%)] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+          <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
             <div className="flex flex-wrap items-center gap-4 animate-fade-in mb-6">
               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider">
                 <Star className="w-3 h-3 fill-current" />
@@ -336,9 +336,9 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0, scale: 0.9 }} 
             animate={{ opacity: 1, scale: 1 }} 
             transition={{ duration: 1, ease: "easeOut" }}
@@ -356,7 +356,7 @@ export default function HomePage() {
               <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
             </div>
             
-            <motion.div 
+            <m.div 
               animate={{ y: [0, -15, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="absolute -top-6 -right-6 glass p-6 rounded-3xl shadow-premium z-20 border border-white/10"
@@ -370,9 +370,9 @@ export default function HomePage() {
                   <div className="text-xs text-muted">Average Rating</div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
 
-            <motion.div 
+            <m.div 
               animate={{ y: [0, 15, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
               className="absolute -bottom-6 -left-6 glass-morphism p-6 rounded-3xl shadow-premium z-20"
@@ -386,8 +386,8 @@ export default function HomePage() {
                   <div className="text-xs text-muted">via WhatsApp</div>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         </div>
       </section>
 

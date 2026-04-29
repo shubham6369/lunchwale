@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+
 import { 
   Search, 
   MapPin, 
@@ -10,6 +10,7 @@ import {
   Utensils,
   ShoppingBag
 } from "lucide-react";
+import { m } from "framer-motion";
 import VendorCard from "@/components/VendorCard";
 import VendorFilters from "@/components/VendorFilters";
 import { useCart } from "@/context/CartContext";
@@ -53,7 +54,11 @@ export default function VendorsPage() {
       <div className="max-w-7xl mx-auto px-6 pt-32">
         <div className="grid lg:grid-cols-[280px_1fr] gap-12">
           {/* Sidebar Filters */}
-          <aside className="hidden lg:block space-y-8 sticky top-32 h-fit">
+          <m.aside 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="hidden lg:block space-y-8 sticky top-32 h-fit"
+          >
             <div className="p-8 rounded-[32px] bg-secondary/30 border border-white/5">
               <VendorFilters 
                 selectedCategory={selectedCategory} 
@@ -74,10 +79,13 @@ export default function VendorsPage() {
                 Upgrade Now
               </button>
             </div>
-          </aside>
+          </m.aside>
 
           {/* Main Content */}
-          <section>
+          <m.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
               <div>
                 <h1 className="text-4xl font-bold mb-2 tracking-tight">Discover <span className="text-gradient">Kitchens</span></h1>
@@ -125,8 +133,15 @@ export default function VendorsPage() {
               </div>
             ) : filteredVendors.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-8">
-                {filteredVendors.map((vendor) => (
-                  <VendorCard key={vendor.id} {...vendor} />
+                {filteredVendors.map((vendor, idx) => (
+                  <m.div
+                    key={vendor.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                  >
+                    <VendorCard {...vendor} />
+                  </m.div>
                 ))}
               </div>
             ) : (
@@ -144,7 +159,7 @@ export default function VendorsPage() {
                 </button>
               </div>
             )}
-          </section>
+          </m.section>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   Plus, 
   Search, 
@@ -193,7 +193,7 @@ export default function VendorMenuPage() {
       <div className="grid gap-4">
         <AnimatePresence>
           {filteredDishes.length > 0 ? filteredDishes.map((item, idx) => (
-            <motion.div
+            <m.div
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -271,14 +271,14 @@ export default function VendorMenuPage() {
       <AnimatePresence>
         {isAdding && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }}
               onClick={() => setIsAdding(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
-            <motion.div 
+            <m.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}

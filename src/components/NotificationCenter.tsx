@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Bell, X, CheckCircle2, Clock, Package } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firestore";
@@ -57,14 +57,14 @@ export default function NotificationCenter() {
       <AnimatePresence>
         {isOpen && (
           <>
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
               className="fixed inset-0 z-100"
             />
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -111,7 +111,7 @@ export default function NotificationCenter() {
                     View All Activity
                  </button>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { AlertCircle, RotateCcw, Home } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,7 +19,7 @@ export default function Error({
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <motion.div 
+      <m.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-md w-full bg-secondary/40 backdrop-blur-xl border border-white/5 rounded-[40px] p-10 text-center space-y-6"
@@ -58,7 +58,7 @@ export default function Error({
             Error ID: {error.digest}
           </p>
         )}
-      </motion.div>
+      </m.div>
     </div>
   );
 }

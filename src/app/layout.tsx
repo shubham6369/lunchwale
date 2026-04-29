@@ -30,6 +30,8 @@ export const metadata: Metadata = {
   },
 };
 
+import FramerMotionProvider from "@/components/animations/FramerMotionProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,14 +45,16 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>
           <CartProvider>
-            <Navbar />
-            <div className="flex-1">
-              {children}
-            </div>
-            <Footer />
-            <WhatsAppButton />
-            <Toaster position="bottom-right" toastOptions={{ style: { background: '#111', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
-            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+            <FramerMotionProvider>
+              <Navbar />
+              <div className="flex-1">
+                {children}
+              </div>
+              <Footer />
+              <WhatsAppButton />
+              <Toaster position="bottom-right" toastOptions={{ style: { background: '#111', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
+              <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+            </FramerMotionProvider>
           </CartProvider>
         </AuthProvider>
       </body>

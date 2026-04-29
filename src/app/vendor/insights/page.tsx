@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { TrendingUp, ShoppingBag, Users, Star, ArrowUpRight, Utensils } from "lucide-react";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -115,7 +115,7 @@ export default function VendorInsightsPage() {
         {statCards.map((stat, idx) => {
           const Icon = stat.icon;
           return (
-            <motion.div
+            <m.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -143,7 +143,7 @@ export default function VendorInsightsPage() {
               <div className="text-[10px] font-bold text-primary">
                 {day.revenue > 0 ? `₹${day.revenue}` : ""}
               </div>
-              <motion.div
+              <m.div
                 initial={{ height: 0 }}
                 animate={{ height: `${(day.revenue / maxRevenue) * 100}%` }}
                 transition={{ delay: i * 0.07, duration: 0.5, ease: "easeOut" }}
@@ -177,7 +177,7 @@ export default function VendorInsightsPage() {
                     <span className="text-[10px] text-muted font-bold">{dish.count} sold • ₹{dish.revenue.toLocaleString()}</span>
                   </div>
                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
+                    <m.div
                       initial={{ width: 0 }}
                       animate={{ width: `${(dish.count / (topDishes[0]?.count || 1)) * 100}%` }}
                       transition={{ delay: i * 0.1, duration: 0.6 }}

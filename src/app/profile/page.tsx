@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { User, Phone, MapPin, Mail, Save, ArrowLeft, Loader2, CheckCircle2, Heart } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -147,13 +147,13 @@ export default function ProfilePage() {
         {activeTab === "settings" ? (
           <div className="bg-secondary/20 border border-white/5 p-8 rounded-3xl space-y-6 relative">
           {success && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="absolute top-4 right-4 flex items-center gap-2 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20"
             >
               <CheckCircle2 className="w-4 h-4" /> Saved!
-            </motion.div>
+            </m.div>
           )}
 
           <form onSubmit={handleSave} className="space-y-5">

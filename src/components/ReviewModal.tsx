@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Star, X, MessageSquare, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { submitReview } from "@/lib/firestore";
@@ -59,7 +59,7 @@ export default function ReviewModal({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -67,7 +67,7 @@ export default function ReviewModal({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -75,14 +75,14 @@ export default function ReviewModal({
           >
             {isSuccess ? (
               <div className="p-12 text-center">
-                <motion.div
+                <m.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", damping: 12 }}
                   className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
                 >
                   <CheckCircle2 className="w-10 h-10" />
-                </motion.div>
+                </m.div>
                 <h2 className="text-2xl font-bold mb-2">Thank you!</h2>
                 <p className="text-muted">Your review helps the community and {vendorName}.</p>
               </div>
@@ -154,7 +154,7 @@ export default function ReviewModal({
                 </div>
               </>
             )}
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>
