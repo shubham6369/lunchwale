@@ -81,10 +81,10 @@ export default function HomePage() {
       setLoadingVendors(false);
     });
 
-    // 2. Listen to all dishes (using collectionGroup)
+    // 2. Listen to all dishes (using collectionGroup) — filter client-side to avoid missing index errors
     let unsubDishes = () => {};
     import("firebase/firestore").then(({ collectionGroup }) => {
-      const dishesQuery = query(collectionGroup(db, 'dishes'), where('isAvailable', '==', true));
+      const dishesQuery = query(collectionGroup(db, 'dishes'));
 
       unsubDishes = onSnapshot(dishesQuery, (snapshot) => {
         const data = snapshot.docs
@@ -92,7 +92,8 @@ export default function HomePage() {
             id: doc.id,
             vendorId: doc.ref.parent.parent?.id || "",
             ...doc.data()
-          }));
+          }))
+          .filter((d: any) => d.isAvailable !== false); // client-side filter
           
         setDishes(data);
         setFilteredDishes(data);
