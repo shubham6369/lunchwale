@@ -257,7 +257,7 @@ export default function VendorMenuPage() {
                   <Trash2 className="w-5 h-5" />
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           )) : (
             <div className="h-48 flex flex-col items-center justify-center text-muted border border-dashed border-white/10 rounded-[40px] bg-white/2">
               <Utensils className="w-8 h-8 mb-2 opacity-20" />
@@ -383,7 +383,7 @@ export default function VendorMenuPage() {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

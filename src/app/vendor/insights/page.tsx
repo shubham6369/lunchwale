@@ -127,7 +127,7 @@ export default function VendorInsightsPage() {
               </div>
               <div className="text-[10px] font-bold text-muted uppercase tracking-widest">{stat.label}</div>
               <div className="text-2xl font-black text-white mt-1">{stat.value}</div>
-            </motion.div>
+            </m.div>
           );
         })}
       </div>

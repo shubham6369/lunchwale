@@ -246,7 +246,7 @@ export default function VendorOffersPage() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           ))}
         </div>
       )}
@@ -389,7 +389,7 @@ export default function VendorOffersPage() {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
