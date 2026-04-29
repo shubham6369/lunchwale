@@ -63,16 +63,13 @@ export default function HomePage() {
 
   // Fetch vendors, dishes, and live stats in real-time
   useEffect(() => {
-    // 1. Listen to active vendors
-    const vendorsQuery = query(
-      collection(db, "vendors"),
-      where("status", "==", "active"),
-      orderBy("createdAt", "desc"),
-      limit(50)
-    );
+    // 1. Listen to all vendors — filter client-side to avoid missing index errors
+    const vendorsQuery = query(collection(db, "vendors"));
 
     const unsubVendors = onSnapshot(vendorsQuery, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((v: any) => !v.status || v.status === "active"); // show all if no status field
       setVendors(data);
       setFilteredVendors(data);
       setLoadingVendors(false);
