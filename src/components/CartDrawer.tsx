@@ -2,7 +2,7 @@
 
 import React from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, MapPin, MessageCircle, DollarSign } from "lucide-react";
+import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, MapPin, MessageCircle, DollarSign, Phone } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/firestore";
@@ -22,8 +22,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   
   const [isCheckingOut, setIsCheckingOut] = React.useState(false);
   const [address, setAddress] = React.useState("");
+  const [phoneNumber, setPhoneNumber] = React.useState("");
   const [paymentMethod, setPaymentMethod] = React.useState<"online" | "cod">("cod");
   const [isPlacing, setIsPlacing] = React.useState(false);
+
+  React.useEffect(() => {
+    if (user?.phoneNumber) {
+      setPhoneNumber(user.phoneNumber);
+    }
+  }, [user]);
 
   const handleCheckout = async () => {
     if (!user) return;
@@ -33,7 +40,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       return;
     }
 
-    if (!address.trim()) return;
+    if (!address.trim() || !phoneNumber.trim()) {
+      alert("Please provide both delivery address and mobile number.");
+      return;
+    }
 
     setIsPlacing(true);
     try {
@@ -74,6 +84,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 items: items,
                 total: cartTotal,
                 address: address,
+                phoneNumber: phoneNumber,
                 status: "pending",
                 paymentMethod: "online",
                 paymentId: response.razorpay_payment_id
@@ -85,7 +96,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               alert("Payment verification failed!");
             }
           },
-          prefill: { contact: user.phoneNumber || "", email: user.email || "" },
+          prefill: { contact: phoneNumber || user.phoneNumber || "", email: user.email || "" },
           theme: { color: "#E2B171" },
         };
 
@@ -99,6 +110,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           items: items,
           total: cartTotal,
           address: address,
+          phoneNumber: phoneNumber,
           status: "pending",
           paymentMethod: "cod"
         });
@@ -119,7 +131,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     
     const vendorPhone = "919876543210"; // Placeholder for vendor's WhatsApp
     const itemList = items.map(item => `• ${item.name} (x${item.quantity}) - ₹${item.price * item.quantity}`).join('\n');
-    const message = `*New Order from LunchNow!*%0A%0A*Items:*%0A${itemList}%0A%0A*Total:* ₹${cartTotal}%0A%0A*Address:* ${address || 'Address not provided'}%0A%0A*Customer:* ${user?.phoneNumber || 'Customer'}`;
+    const message = `*New Order from LunchNow!*%0A%0A*Items:*%0A${itemList}%0A%0A*Total:* ₹${cartTotal}%0A%0A*Address:* ${address || 'Address not provided'}%0A%0A*Customer Phone:* ${phoneNumber || user?.phoneNumber || 'Not provided'}`;
     
     window.open(`https://wa.me/${vendorPhone}?text=${message}`, "_blank");
   };
@@ -242,6 +254,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       </div>
                     </div>
 
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-primary">
+                        <Phone className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Mobile Number</span>
+                      </div>
+                      <input 
+                        type="tel"
+                        placeholder="Enter your 10-digit mobile number"
+                        className="w-full bg-secondary border border-white/10 rounded-2xl p-4 text-sm focus:outline-none focus:border-primary transition-colors"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                      />
+                    </div>
+
                     <div className="space-y-4 mb-4">
                       <div className="flex items-center gap-2 text-primary">
                         <MapPin className="w-4 h-4" />
@@ -280,7 +306,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 ) : (
                   <button 
                     onClick={handleCheckout}
-                    disabled={isPlacing || (isCheckingOut && !address.trim())}
+                    disabled={isPlacing || (isCheckingOut && (!address.trim() || !phoneNumber.trim()))}
                     className="w-full py-4 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-2 group shadow-glow hover:bg-primary-dark transition-all disabled:opacity-50 disabled:grayscale"
                   >
                     {isPlacing ? (
