@@ -24,13 +24,10 @@ import { useState, useEffect } from "react";
 import { getVendors, getAllDishes } from "@/lib/firestore";
 import { collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import VendorCard from "@/components/VendorCard";
 import DishCard from "@/components/DishCard";
-import { VendorCardSkeleton } from "@/components/SkeletonLoader";
 
 const DISH_FILTERS = ["All", "Veg", "Non-Veg"];
 const PRICE_FILTERS = ["All", "Under ₹100", "₹100 - ₹200", "₹200+"];
-const RATING_FILTERS = ["All", "4.0+", "4.5+"];
 
 export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -38,11 +35,6 @@ export default function HomePage() {
 
   // Vendors
   const [vendors, setVendors] = useState<any[]>([]);
-  const [filteredVendors, setFilteredVendors] = useState<any[]>([]);
-  const [vendorSearch, setVendorSearch] = useState("");
-  const [loadingVendors, setLoadingVendors] = useState(true);
-  const [userLocation, setUserLocation] = useState<string | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
 
   // Dishes
   const [dishes, setDishes] = useState<any[]>([]);
@@ -71,11 +63,8 @@ export default function HomePage() {
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter((v: any) => !v.status || v.status === "active"); // show all if no status field
       setVendors(data);
-      setFilteredVendors(data);
-      setLoadingVendors(false);
     }, (error) => {
       console.error("Vendors listener error:", error);
-      setLoadingVendors(false);
     });
 
     // 2. Listen to all dishes (using collectionGroup) — filter client-side to avoid missing index errors
@@ -185,73 +174,6 @@ export default function HomePage() {
     }
   }, [vendors, dishes, dishFilter, dishSearch, priceFilter]);
 
-  // Filter vendors
-  useEffect(() => {
-    if (!vendorSearch) {
-      setFilteredVendors(vendors);
-      return;
-    }
-    const q = vendorSearch.toLowerCase();
-    let result = vendors.filter(v =>
-      v.name?.toLowerCase().includes(q) || 
-      v.location?.toLowerCase().includes(q) ||
-      v.address?.toLowerCase().includes(q)
-    );
-
-    // Sort by relevance: name match gets priority over location/address match
-    if (q) {
-      result = [...result].sort((a, b) => {
-        const aNameMatch = a.name?.toLowerCase().includes(q) ? 1 : 0;
-        const bNameMatch = b.name?.toLowerCase().includes(q) ? 1 : 0;
-        return bNameMatch - aNameMatch;
-      });
-    }
-
-    // Apply Rating Filter
-    if (ratingFilter === "4.0+") {
-      result = result.filter(v => v.totalReviewCount > 0 && (v.totalRatingSum / v.totalReviewCount) >= 4.0);
-    } else if (ratingFilter === "4.5+") {
-      result = result.filter(v => v.totalReviewCount > 0 && (v.totalRatingSum / v.totalReviewCount) >= 4.5);
-    }
-
-    setFilteredVendors(result);
-  }, [vendorSearch, vendors, ratingFilter]);
-
-  const detectLocation = () => {
-    setIsLocating(true);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          // In a real app, we'd use a Geocoding API here.
-          // For now, we'll simulate finding the city.
-          const { latitude, longitude } = position.coords;
-          console.log("Detected coordinates:", latitude, longitude);
-          
-          // Simulation: random nearby area names
-          const locations = ["Vasant Kunj, Delhi", "Sector 62, Noida", "Cyber Hub, Gurgaon", "Koramangala, Bangalore"];
-          const detected = locations[Math.floor(Math.random() * locations.length)];
-          
-          setUserLocation(detected);
-          setVendorSearch(detected);
-          setIsLocating(false);
-          
-          // Show a nice toast or activity
-          setLatestActivity(`Location detected: ${detected}`);
-          setTimeout(() => setLatestActivity(null), 3000);
-        },
-        (error) => {
-          console.error("Error detecting location:", error);
-          setIsLocating(false);
-          setLatestActivity("Could not detect location. Please search manually.");
-          setTimeout(() => setLatestActivity(null), 3000);
-        }
-      );
-    } else {
-      setIsLocating(false);
-      setLatestActivity("Geolocation is not supported by your browser.");
-      setTimeout(() => setLatestActivity(null), 3000);
-    }
-  };
 
   // Filter dishes
   useEffect(() => {
@@ -501,85 +423,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── Featured Kitchens Section ───────────────────── */}
-      <section id="menu" className="py-24 px-6 bg-secondary/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-            <div>
-              <h2 className="text-4xl font-bold mb-4">
-                Featured <span className="text-primary">Kitchens</span>
-              </h2>
-              <p className="text-muted text-sm">Browse verified home kitchens near you</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Rating filter pills */}
-              <div className="flex gap-2">
-                {RATING_FILTERS.map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setRatingFilter(f)}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-[10px] font-bold transition-all border whitespace-nowrap flex items-center gap-1.5",
-                      ratingFilter === f
-                        ? "bg-primary text-black border-primary"
-                        : "bg-white/5 text-muted border-white/10 hover:border-white/20"
-                    )}
-                  >
-                    {f !== "All" && <Star className={cn("w-3 h-3", ratingFilter === f ? "fill-black" : "fill-primary")} />}
-                    {f}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary transition-colors" />
-                <input 
-                  type="text" 
-                  value={vendorSearch}
-                  onChange={(e) => setVendorSearch(e.target.value)}
-                  placeholder="Search kitchens or locations..." 
-                  className="pl-12 pr-24 py-3 bg-background border border-white/10 rounded-xl outline-none focus:border-primary/50 transition-all text-sm w-80 text-white shadow-xl"
-                />
-                <button 
-                  onClick={detectLocation}
-                  disabled={isLocating}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border border-primary/20 disabled:opacity-50"
-                >
-                  {isLocating ? "..." : "Nearby"}
-                </button>
-              </div>
-          </div>
-        </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {loadingVendors ? (
-              [1, 2, 3].map(i => <VendorCardSkeleton key={i} />)
-            ) : filteredVendors.length > 0 ? (
-              filteredVendors.map((vendor: any) => (
-                <VendorCard 
-                  key={vendor.id}
-                  id={vendor.id}
-                  name={vendor.name}
-                  image={vendor.image || "/images/hero.png"}
-                  rating={vendor.totalReviewCount > 0 ? Number((vendor.totalRatingSum / vendor.totalReviewCount).toFixed(1)) : 0}
-                  location={vendor.address || vendor.location || "Local Kitchen"}
-                  pricePerLunch={vendor.pricePerLunch || 99}
-                  monthlyPlan={vendor.monthlyPlan || 2499}
-                  tags={vendor.tags || vendor.cuisines || []}
-                  isPopular={vendor.isPopular}
-                  deliveryTime={vendor.deliveryTime}
-                />
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center">
-                <div className="text-4xl mb-4">🍽️</div>
-                <h3 className="text-xl font-bold mb-2 text-white">No kitchens found</h3>
-                <p className="text-muted">Try a different search or check back soon.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
