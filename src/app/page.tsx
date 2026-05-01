@@ -22,7 +22,18 @@ import CartDrawer from "@/components/CartDrawer";
 import LoginDialog from "@/components/LoginDialog";
 import { useState, useEffect } from "react";
 import { getVendors, getAllDishes } from "@/lib/firestore";
-import { collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  onSnapshot,
+  QuerySnapshot,
+  DocumentData,
+  QueryDocumentSnapshot,
+  DocumentChange
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import DishCard from "@/components/DishCard";
 
@@ -58,12 +69,12 @@ export default function HomePage() {
     // 1. Listen to all vendors — filter client-side to avoid missing index errors
     const vendorsQuery = query(collection(db, "vendors"));
 
-    const unsubVendors = onSnapshot(vendorsQuery, (snapshot) => {
+    const unsubVendors = onSnapshot(vendorsQuery, (snapshot: QuerySnapshot<DocumentData>) => {
       const data = snapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() }))
         .filter((v: any) => !v.status || v.status === "active"); // show all if no status field
       setVendors(data);
-    }, (error) => {
+    }, (error: Error) => {
       console.error("Vendors listener error:", error);
     });
 
@@ -72,9 +83,9 @@ export default function HomePage() {
     import("firebase/firestore").then(({ collectionGroup }) => {
       const dishesQuery = query(collectionGroup(db, 'dishes'));
 
-      unsubDishes = onSnapshot(dishesQuery, (snapshot) => {
+      unsubDishes = onSnapshot(dishesQuery, (snapshot: QuerySnapshot<DocumentData>) => {
         const data = snapshot.docs
-          .map((doc) => ({
+          .map((doc: QueryDocumentSnapshot<DocumentData>) => ({
             id: doc.id,
             vendorId: doc.ref.parent.parent?.id || "",
             ...doc.data()
@@ -84,14 +95,14 @@ export default function HomePage() {
         setDishes(data);
         setFilteredDishes(data);
         setLoadingDishes(false);
-      }, (error) => {
+      }, (error: Error) => {
         console.error("Dishes listener error:", error);
         setLoadingDishes(false);
       });
     });
 
     // 3. Listen to Live User Count (Users collection is typically smaller)
-    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot: QuerySnapshot<DocumentData>) => {
       setTotalUsers(snapshot.size);
     });
 
@@ -100,24 +111,24 @@ export default function HomePage() {
     
     // Get initial total count once
     import("firebase/firestore").then(({ getCountFromServer }) => {
-      getCountFromServer(collection(db, "orders")).then(snap => {
-        setTotalOrders(snap.data().count);
+      getCountFromServer(collection(db, "orders")).then((snap) => {
+        setTotalOrders(Number(snap.data().count));
       });
     });
 
     // Listen for NEW orders only for activity notification and count increments
     const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(1));
-    const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
+    const unsubOrders = onSnapshot(ordersQuery, (snapshot: QuerySnapshot<DocumentData>) => {
       if (isInitialLoad) {
         isInitialLoad = false;
         return;
       }
 
       // Handle new activity notification and increment total
-      snapshot.docChanges().forEach((change) => {
+      snapshot.docChanges().forEach((change: DocumentChange<DocumentData>) => {
         if (change.type === "added") {
           const order = change.doc.data();
-          setTotalOrders(prev => prev + 1); // Increment count locally
+          setTotalOrders((prev: number) => prev + 1); // Increment count locally
           
           if (order.vendorName) {
             setLatestActivity(`Someone just ordered from ${order.vendorName}!`);
@@ -375,7 +386,7 @@ export default function HomePage() {
                 <input
                   type="text"
                   value={dishSearch}
-                  onChange={e => setDishSearch(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDishSearch(e.target.value)}
                   placeholder="Search dishes..."
                   className="pl-11 pr-5 py-2.5 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-primary/50 transition-all text-sm w-52 text-white"
                 />
