@@ -277,8 +277,8 @@ export default function HomePage() {
           >
             <div className="relative z-10 rounded-[40px] overflow-hidden border border-white/10 shadow-premium aspect-square bg-secondary/50">
               <Image 
-                src="https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=800&q=80" 
-                alt="Gourmet Lunch Bowl" 
+                src="/images/hero.png" 
+                alt="Delicious Indian Lunch Thali" 
                 width={800} 
                 height={800}
                 className="w-full h-full object-cover"
