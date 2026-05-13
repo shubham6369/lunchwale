@@ -275,13 +275,13 @@ export default function HomePage() {
             transition={{ duration: 1, ease: "easeOut" }}
             className="relative"
           >
-            <div className="relative z-10 rounded-[40px] overflow-hidden border border-white/10 shadow-premium">
+            <div className="relative z-10 rounded-[40px] overflow-hidden border border-white/10 shadow-premium aspect-square bg-secondary/50">
               <Image 
-                src="/images/hero.png" 
+                src="https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=800&q=80" 
                 alt="Gourmet Lunch Bowl" 
                 width={800} 
                 height={800}
-                className="w-full h-auto"
+                className="w-full h-full object-cover"
                 priority
               />
               <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
@@ -322,8 +322,56 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ─── Top Rated Kitchens ────────────────────────────── */}
+      <section className="py-12 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">Verified <span className="text-primary">Kitchens</span></h2>
+              <p className="text-muted text-sm uppercase tracking-widest font-bold">Handpicked local chefs around you</p>
+            </div>
+            <Link href="/vendors" className="text-primary hover:text-primary-dark font-bold text-sm flex items-center gap-1 group transition-all">
+              View All Kitchens <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {vendors.slice(0, 3).map((vendor) => (
+              <Link 
+                key={vendor.id} 
+                href={`/vendors/${vendor.id}`}
+                className="group relative h-64 rounded-[40px] overflow-hidden border border-white/5 bg-secondary shadow-xl hover:scale-[1.02] transition-all duration-500"
+              >
+                <img 
+                  src={vendor.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80"} 
+                  alt={vendor.name} 
+                  className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-8 w-full">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-3 py-1 bg-primary text-white text-[10px] font-bold uppercase rounded-full">
+                      {vendor.rating || "5.0"} <Star className="w-2.5 h-2.5 inline-block ml-1 fill-current" />
+                    </span>
+                    <span className="px-3 py-1 bg-white/10 text-white text-[10px] font-bold uppercase rounded-full backdrop-blur-md">
+                      {vendor.openingTime} - {vendor.closingTime}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-1 group-hover:text-primary transition-colors">{vendor.name}</h3>
+                  <p className="text-gray-400 text-sm line-clamp-1">{vendor.description || vendor.cuisines?.join(", ")}</p>
+                </div>
+              </Link>
+            ))}
+            {vendors.length === 0 && Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-64 rounded-[40px] bg-secondary/30 border border-white/5 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+
       {/* ─── All Dishes Section ──────────────────────────── */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 bg-secondary/20">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -433,6 +481,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
 
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
