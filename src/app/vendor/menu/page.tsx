@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { getVendorDishes, upsertDish, deleteDish } from "@/lib/firestore";
+import { uploadImage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 interface Dish {
@@ -39,6 +40,8 @@ export default function VendorMenuPage() {
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -50,7 +53,9 @@ export default function VendorMenuPage() {
   });
 
   const openAddForm = () => {
-    setFormData({ name: "", price: "", category: "", description: "", isVeg: true, image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80" });
+    setFormData({ name: "", price: "", category: "", description: "", isVeg: true, image: "" });
+    setSelectedFile(null);
+    setPreviewUrl(null);
     setEditingDish(null);
     setIsAdding(true);
   };
@@ -58,6 +63,8 @@ export default function VendorMenuPage() {
   const openEditForm = (dish: Dish) => {
     setFormData({ name: dish.name, price: String(dish.price), category: dish.category, description: (dish as any).description || "", isVeg: dish.isVeg, image: dish.image });
     setEditingDish(dish);
+    setSelectedFile(null);
+    setPreviewUrl(dish.image);
     setIsAdding(true);
   };
 
@@ -89,18 +96,43 @@ export default function VendorMenuPage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddDish = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setSaving(true);
     try {
+      let imageUrl = formData.image;
+
+      // Upload image if a new file is selected
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const storagePath = `dishes/${user.uid}/${fileName}`;
+        imageUrl = await uploadImage(selectedFile, storagePath);
+      } else if (!imageUrl && !editingDish) {
+        // Default placeholder if no image and new dish
+        imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80";
+      }
+
       const dishPayload: any = {
         name: formData.name,
         price: Number(formData.price),
         category: formData.category || "General",
         isVeg: formData.isVeg,
         isAvailable: editingDish ? editingDish.isAvailable : true,
-        image: formData.image,
+        image: imageUrl,
         description: formData.description,
       };
       if (editingDish) {
@@ -114,9 +146,12 @@ export default function VendorMenuPage() {
       }
       setIsAdding(false);
       setEditingDish(null);
-      setFormData({ name: "", price: "", category: "", description: "", isVeg: true, image: formData.image });
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setFormData({ name: "", price: "", category: "", description: "", isVeg: true, image: "" });
     } catch (error) {
       console.error("Error saving dish:", error);
+      alert("Error saving dish. Please check if your image is too large or try again.");
     } finally {
       setSaving(false);
     }
@@ -364,14 +399,41 @@ export default function VendorMenuPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-wrap">
-                    <label className="text-[10px] font-bold text-muted uppercase ml-2">Image URL</label>
-                    <input 
-                      type="text" 
-                      value={formData.image}
-                      onChange={(e) => setFormData({...formData, image: e.target.value})}
-                      className="w-full bg-background border border-white/10 rounded-2xl p-4 text-sm focus:outline-none focus:border-primary transition-all text-white" 
-                    />
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-bold text-muted uppercase ml-2">Dish Image</label>
+                    <div className="flex flex-col items-center gap-4 p-6 bg-white/2 rounded-2xl border border-white/5 border-dashed">
+                      {previewUrl ? (
+                        <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-white/10 shadow-lg">
+                          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <button 
+                            type="button"
+                            onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
+                            className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-32 h-32 rounded-2xl bg-white/5 flex flex-col items-center justify-center text-muted border border-white/5">
+                          <ImageIcon className="w-8 h-8 mb-2 opacity-20" />
+                          <span className="text-[8px] uppercase tracking-widest opacity-40 font-bold">No Image</span>
+                        </div>
+                      )}
+                      
+                      <div className="w-full">
+                        <label className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl cursor-pointer transition-all text-xs font-bold text-white">
+                          <ImageIcon className="w-4 h-4" />
+                          {selectedFile ? "Change Image" : "Select Dish Photo"}
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleFileChange} 
+                            className="hidden" 
+                          />
+                        </label>
+                        <p className="text-[8px] text-muted text-center mt-2 uppercase tracking-tighter">Recommended: 1:1 ratio, max 2MB</p>
+                      </div>
+                    </div>
                   </div>
 
                   <button 

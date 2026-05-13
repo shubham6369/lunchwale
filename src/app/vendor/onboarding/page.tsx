@@ -6,7 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { m } from "framer-motion";
-import { Utensils, MapPin, Clock, Tag, ArrowRight, Loader2 } from "lucide-react";
+import { Utensils, MapPin, Clock, Tag, ArrowRight, Loader2, Image as ImageIcon, X } from "lucide-react";
+import { uploadImage } from "@/lib/storage";
 
 export default function VendorOnboarding() {
   const { user, profile, updateProfile, loading: authLoading } = useAuth();
@@ -20,6 +21,8 @@ export default function VendorOnboarding() {
     closingTime: "22:00",
     cuisines: "",
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -33,6 +36,18 @@ export default function VendorOnboarding() {
     }
   }, [user, profile, authLoading, router]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -41,6 +56,15 @@ export default function VendorOnboarding() {
     try {
       const vendorId = user.uid;
       
+      let imageUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80";
+      
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `kitchen-${Date.now()}.${fileExt}`;
+        const storagePath = `vendors/${vendorId}/${fileName}`;
+        imageUrl = await uploadImage(selectedFile, storagePath);
+      }
+
       // 1. Create Vendor Document
       await setDoc(doc(db, "vendors", vendorId), {
         id: vendorId,
@@ -53,7 +77,7 @@ export default function VendorOnboarding() {
         status: "pending", // Admin needs to approve
         rating: 0,
         totalReviews: 0,
-        image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80", // Placeholder
+        image: imageUrl,
         createdAt: serverTimestamp(),
       });
 
@@ -124,6 +148,49 @@ export default function VendorOnboarding() {
                   rows={3}
                   className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors"
                 />
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-white/5" />
+
+          {/* Kitchen Image */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold flex items-center gap-2 text-orange-400">
+              <ImageIcon size={20} /> Kitchen Cover Image
+            </h2>
+            
+            <div className="flex flex-col items-center gap-6 p-8 bg-[#1a1a1a] rounded-3xl border border-white/10 border-dashed">
+              {previewUrl ? (
+                <div className="relative w-full max-w-sm aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button 
+                    type="button"
+                    onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
+                    className="absolute top-4 right-4 p-2 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors shadow-lg"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full max-w-sm aspect-video rounded-2xl bg-white/5 flex flex-col items-center justify-center text-gray-500 border border-white/5">
+                  <ImageIcon size={48} className="mb-4 opacity-20" />
+                  <p className="text-sm font-medium uppercase tracking-widest opacity-40">No Image Selected</p>
+                </div>
+              )}
+              
+              <div className="w-full max-w-sm">
+                <label className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-orange-600/10 hover:bg-orange-600/20 border border-orange-600/30 rounded-2xl cursor-pointer transition-all text-sm font-bold text-orange-400">
+                  <ImageIcon size={20} />
+                  {selectedFile ? "Change Image" : "Upload Kitchen Photo"}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                    className="hidden" 
+                  />
+                </label>
+                <p className="text-xs text-gray-500 text-center mt-3 uppercase tracking-wider opacity-60">High quality landscape photos work best</p>
               </div>
             </div>
           </div>
